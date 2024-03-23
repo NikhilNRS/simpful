@@ -35,7 +35,41 @@ def point_mutation(system, mutation_rate):
 
 def generate_new_individual(template_system):
     """Generates a new individual based on a template EvolvableFuzzySystem."""
-    # Placeholder for generating a new system, potentially by copying and mutating the template
-    new_system = template_system.copy()
+    new_system = template_system.clone()
+    # Apply one or more mutations to ensure diversity
     new_system.mutate_rule()
     return new_system
+
+
+"""
+To-Do List for Future Development of gp_utilities.py:
+
+1. Enhance Selection Mechanisms:
+   - Investigate and possibly implement more advanced selection mechanisms that better accommodate the diversity of solutions and the specific needs of evolving fuzzy systems. Consider adaptive selection strategies that can evolve over generations based on population dynamics.
+
+2. Refine Crossover Operations:
+   - Develop more sophisticated crossover mechanisms that can intelligently combine fuzzy rules from parents, taking into account the structure and semantics of the rules. Explore crossover strategies that can maintain or enhance the logical coherence of the rule sets.
+
+3. Advance Mutation Strategies:
+   - Implement a wider range of mutation strategies to effectively explore the solution space. This includes mutating not only the variables within rules but also the operators and the structure of the rules themselves. Consider adaptive mutation rates or context-sensitive mutations that respond to the current state of the evolutionary process.
+
+4. Implement Rule Representation and Management:
+   - Given the requirement for rules to contain an arbitrary number of variables connected by logic operators, ensure that the utilities support the creation, manipulation, and evaluation of such complex rule structures. This may involve developing a more flexible internal representation of rules within `EvolvableFuzzySystem`.
+
+5. Data-Driven Fuzzy Set and Rule Generation:
+   - Develop utilities for automatically generating fuzzy sets and rules based on data, as required by the project. This includes inferring optimal fuzzy sets and membership functions from data and creating initial rule sets that reflect data-driven insights.
+
+6. Support for Takagi-Sugeno-Kang (TSK) Models:
+   - Ensure that the utilities facilitate the evolution of fuzzy systems based on TSK models, particularly for applications involving regression-based outcomes. This might include specific crossover and mutation strategies tailored for TSK rule structures.
+
+7. Feature Selection Through Genetic Programming:
+   - Integrate feature selection mechanisms within the genetic programming process to identify and prioritize the most informative variables. This involves developing strategies to evaluate the utility of variables within the context of evolving fuzzy systems and adjusting the genetic operations to favor systems that make effective use of the most relevant variables.
+
+8. Scalability and Computational Efficiency:
+   - Continuously assess and enhance the scalability and computational efficiency of the genetic operations. Explore parallelization, optimization of genetic operations, and efficient data handling to accommodate large datasets and complex fuzzy system models.
+
+9. Logging and Analysis Tools:
+   - Develop comprehensive logging and analysis tools to monitor the progress of the genetic algorithm, analyze the evolution of fuzzy systems over generations, and extract insights into the efficacy of different genetic operations and strategies.
+
+This to-do list sets the direction for enhancing and expanding the capabilities of the genetic programming utilities in `gp_utilities.py`, ensuring they align with the intricate requirements of evolving data-driven fuzzy systems for complex design problems.
+"""
