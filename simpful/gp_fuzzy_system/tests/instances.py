@@ -248,7 +248,7 @@ if __name__ == "__main__":
             print("Rules:")
             for rule in instance._rules:
                 print(f" - {rule}")
-            print()  # Add an empty line for better readability
+            print()
 
     # For '-vv' argument: Run the make_predictions_with_models function
     if verbose_level == 2:
