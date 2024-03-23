@@ -1,13 +1,19 @@
 from simpful import FuzzySystem
 import numpy as np
 
+from simpful import FuzzySystem
+import numpy as np
+from copy import deepcopy
+
 class EvolvableFuzzySystem(FuzzySystem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fitness_score = None
         self.mutation_rate = 0.01  # Adjustable mutation rate for evolution
-        # Use the existing structure for managing rules
-        # self._rules will be directly manipulated for genetic operations
+
+    def clone(self):
+        """Creates a deep copy of the system, ensuring independent instances."""
+        return deepcopy(self)
 
     def add_rule(self, rule):
         """Adds a new fuzzy rule to the system."""
@@ -18,26 +24,27 @@ class EvolvableFuzzySystem(FuzzySystem):
         if not self._rules:
             return  # No operation if there are no rules
         rule_index = np.random.randint(len(self._rules))
-        # Example mutation logic: this should be more sophisticated in practice
         mutated_rule = self._mutate_rule_logic(self._rules[rule_index]['rule'])
         self._rules[rule_index]['rule'] = mutated_rule
 
     def _mutate_rule_logic(self, rule):
-        """Defines the logic for mutating a given rule. Placeholder for more complex logic."""
-        # Simplify for MVP: Example of mutating a rule by toggling a condition
-        # In practice, this could involve swapping operators, changing variables, etc.
+        """Defines the logic for mutating a given rule."""
         return rule.replace("IS", "IS NOT") if "IS" in rule else rule
 
     def crossover(self, partner_system):
         """Performs crossover between this system and another, exchanging rules."""
         if not self._rules or not partner_system._rules:
-            return None, None  # No operation if either system lacks rules
+            return None, None
         crossover_point = min(len(self._rules), len(partner_system._rules)) // 2
-        new_rules_for_self = self._rules[:crossover_point] + partner_system._rules[crossover_point:]
-        new_rules_for_partner = partner_system._rules[:crossover_point] + self._rules[crossover_point:]
-        # Note: After crossover, you may need to validate or reformat rules to ensure consistency
-        
-        return new_rules_for_self, new_rules_for_partner
+
+        # Use clone to ensure that we're working with independent copies
+        new_self = self.clone()
+        new_partner = partner_system.clone()
+
+        new_self._rules = new_self._rules[:crossover_point] + new_partner._rules[crossover_point:]
+        new_partner._rules = new_partner._rules[:crossover_point] + new_self._rules[crossover_point:]
+
+        return new_self, new_partner
 
     def evaluate_fitness(self, historical_data, predictions):
         """Calculates the fitness score based on a comparison metric like RMSE."""
