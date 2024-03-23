@@ -1,4 +1,7 @@
+import sys
+sys.path.append('..')
 from evolvable_fuzzy_system import EvolvableFuzzySystem
+
 from simpful import FuzzySet, LinguisticVariable
 import pandas as pd
 
@@ -32,16 +35,6 @@ def subset_features_from_csv(file_path, system_name):
     subset_data = data[feature_names]
     
     return subset_data
-
-# Assuming the CSV file is in the same folder
-file_path = 'selected_variables_first_100.csv'  # Update if the file is in a different location
-
-# Example usage with the system names
-for system_name in features_dict.keys():
-    system_data = subset_features_from_csv(file_path, system_name)
-    print(f"{system_name} Data:")
-    print(system_data.head())
-
 
 # Initializing EvolvableFuzzySystem instances
 economic_health = EvolvableFuzzySystem()
@@ -99,9 +92,10 @@ gld_close_lv = LinguisticVariable([
     FuzzySet(points=[[170., 0.], [200., 1.]], term="High")
 ], concept="GLD Close Price")
 
+# Corrected MACD Linguistic Variable
 macd_lv = LinguisticVariable([
     FuzzySet(points=[[-2., 1.], [0., 0.]], term="Negative"),
-    FuzzySet(points=[[0., 1.]], term="Neutral"),
+    FuzzySet(points=[[-0.5, 0.], [0., 1.], [0.5, 0.]], term="Neutral"),  # Adjusted to include more than one point
     FuzzySet(points=[[0., 0.], [2., 1.]], term="Positive")
 ], concept="MACD")
 
@@ -151,7 +145,7 @@ add_relevant_linguistic_variables(inflation_prediction, ["inflation_rate_value",
 add_relevant_linguistic_variables(market_sentiment, ["macd", "rsi", "volume", "spy_close"])
 
 # Add relevant linguistic variables to Economic Health system
-add_relevant_linguistic_variables(economic_health, ["gdp_growth_annual_prcnt", "unemployment_rate_value"])
+add_relevant_linguistic_variables(economic_health, ["gdp_growth_annual_prcnt", "unemployment_rate_value", "trade_balance_value", "foreign_direct_investment_value"])
 
 
 # Economic Health
@@ -171,7 +165,7 @@ inflation_prediction.add_rule("IF (inflation_rate_value IS Medium) THEN (PricePr
 inflation_prediction.add_rule("IF (gdp_growth_annual_prcnt IS High) OR (unemployment_rate_value IS Low) THEN (PricePrediction IS PricePrediction)")
 
 # Market Sentiment Indicator
-market_sentiment.add_rule("IF (macd IS Positive) OR (rsi IS Low) THEN (PricePrediction IS PricePrediction)")
+market_sentiment.add_rule("IF (macd IS Positive) OR (rsi IS Oversold) THEN (PricePrediction IS PricePrediction)")
 market_sentiment.add_rule("IF (volume IS High) AND (spy_close IS High) THEN (PricePrediction IS PricePrediction)")
 
 # Saving instances in a dictionary for easy access
@@ -231,5 +225,48 @@ def make_predictions_with_models(instances, features_dict, file_path):
         for pred in predictions[:5]:  # Print the first 5 predictions as an example
             print(pred)
 
-# Make predictions with the models
-make_predictions_with_models(instances, features_dict, file_path)
+
+import sys
+sys.path.append('..')
+from evolvable_fuzzy_system import EvolvableFuzzySystem
+from simpful import FuzzySet, LinguisticVariable, FuzzySystem
+import pandas as pd
+
+# Your existing setup code here...
+
+if __name__ == "__main__":
+    # Handling command-line arguments for verbose output
+    verbose_level = None
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "-v":
+            verbose_level = 1
+        elif sys.argv[1] == "-vv":
+            verbose_level = 2
+    
+    # Initialize instances
+    instances = {
+        "economic_health": economic_health,
+        "market_risk": market_risk,
+        "investment_opportunity": investment_opportunity,
+        "inflation_prediction": inflation_prediction,
+        "market_sentiment": market_sentiment
+    }
+
+    # For '-v' argument: Print all instances and their rules
+    if verbose_level == 1:
+        for name, instance in instances.items():
+            print(f"Instance Name: {name}")
+            print("Rules:")
+            for rule in instance._rules:
+                print(f" - {rule}")
+            print()  # Add an empty line for better readability
+
+    # For '-vv' argument: Run the make_predictions_with_models function
+    if verbose_level == 2:
+        file_path = 'selected_variables_first_100.csv'
+        for system_name in features_dict.keys():
+            system_data = subset_features_from_csv(file_path, system_name)
+            print(f"{system_name} Data:")
+            print(system_data.head())
+
+        make_predictions_with_models(instances, features_dict, file_path)
