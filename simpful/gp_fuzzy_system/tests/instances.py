@@ -1,9 +1,8 @@
 import sys
 sys.path.append('..')
 from evolvable_fuzzy_system import EvolvableFuzzySystem
-
-from simpful import FuzzySet, LinguisticVariable
 import pandas as pd
+from simpful import FuzzySet, LinguisticVariable, FuzzySystem
 
 features_dict = {
     "economic_health": ["gdp_growth_annual_prcnt", "unemployment_rate_value", "trade_balance_value", "foreign_direct_investment_value"],
@@ -42,8 +41,6 @@ market_risk = EvolvableFuzzySystem()
 investment_opportunity = EvolvableFuzzySystem()
 inflation_prediction = EvolvableFuzzySystem()
 market_sentiment = EvolvableFuzzySystem()
-
-from simpful import FuzzySet, LinguisticVariable, FuzzySystem
 
 class EvolvableFuzzySystem(FuzzySystem):
     def __init__(self, *args, **kwargs):
@@ -95,7 +92,7 @@ gld_close_lv = LinguisticVariable([
 # Corrected MACD Linguistic Variable
 macd_lv = LinguisticVariable([
     FuzzySet(points=[[-2., 1.], [0., 0.]], term="Negative"),
-    FuzzySet(points=[[-0.5, 0.], [0., 1.], [0.5, 0.]], term="Neutral"),  # Adjusted to include more than one point
+    FuzzySet(points=[[-0.5, 0.], [0., 1.], [0.5, 0.]], term="Neutral"),
     FuzzySet(points=[[0., 0.], [2., 1.]], term="Positive")
 ], concept="MACD")
 
@@ -225,14 +222,6 @@ def make_predictions_with_models(instances, features_dict, file_path):
         for pred in predictions[:5]:  # Print the first 5 predictions as an example
             print(pred)
 
-
-import sys
-sys.path.append('..')
-from evolvable_fuzzy_system import EvolvableFuzzySystem
-from simpful import FuzzySet, LinguisticVariable, FuzzySystem
-import pandas as pd
-
-# Your existing setup code here...
 
 if __name__ == "__main__":
     # Handling command-line arguments for verbose output
