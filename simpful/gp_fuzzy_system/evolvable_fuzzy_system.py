@@ -1,8 +1,5 @@
 from simpful import FuzzySystem
 import numpy as np
-
-from simpful import FuzzySystem
-import numpy as np
 from copy import deepcopy
 
 class EvolvableFuzzySystem(FuzzySystem):
@@ -24,12 +21,16 @@ class EvolvableFuzzySystem(FuzzySystem):
         if not self._rules:
             return  # No operation if there are no rules
         rule_index = np.random.randint(len(self._rules))
-        mutated_rule = self._mutate_rule_logic(self._rules[rule_index]['rule'])
-        self._rules[rule_index]['rule'] = mutated_rule
+        # Access the rule condition directly assuming the structure is [condition, action]
+        original_condition = self._rules[rule_index][0]
+        # Perform some mutation on the condition; this is a placeholder for your mutation logic
+        mutated_condition = self._mutate_rule_logic(original_condition)
+        # Update the rule with the mutated condition
+        self._rules[rule_index] = (mutated_condition, self._rules[rule_index][1])
 
-    def _mutate_rule_logic(self, rule):
-        """Defines the logic for mutating a given rule."""
-        return rule.replace("IS", "IS NOT") if "IS" in rule else rule
+    def _mutate_rule_logic(self, condition):
+        """A simple example mutation that toggles 'IS' to 'IS NOT' and vice versa."""
+        return condition.replace("IS", "IS NOT") if "IS" in condition else condition.replace("IS NOT", "IS")
 
     def crossover(self, partner_system):
         """Performs crossover between this system and another, exchanging rules."""
