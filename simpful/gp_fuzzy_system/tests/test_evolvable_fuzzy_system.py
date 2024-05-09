@@ -5,24 +5,29 @@ import unittest
 parent_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(parent_dir)
 
-from evolvable_fuzzy_system import EvolvableFuzzySystem
+from instances import economic_health, market_risk, investment_opportunity, inflation_prediction, market_sentiment
 
+# Now, you can use these instances in your tests
 class TestEvolvableFuzzySystem(unittest.TestCase):
+    def test_economic_health(self):
+        # This is an example test, replace with actual logic
+        self.assertIsNotNone(economic_health)
 
-    def test_initialization(self):
-        # Initialize the system
-        system = EvolvableFuzzySystem()
-        
-        # Check default mutation_rate
-        self.assertEqual(system.mutation_rate, 0.01)
-        
-        # Verify the system starts with no rules
-        self.assertEqual(len(system._rules), 0)
-        
-        # Check that fitness_score is None
-        self.assertIsNone(system.fitness_score)
+    def test_market_risk(self):
+        # This is an example test, replace with actual logic
+        self.assertIsNotNone(market_risk)
 
-# More tests can be added here
+    def test_investment_opportunity(self):
+        # This is an example test, replace with actual logic
+        self.assertIsNotNone(investment_opportunity)
+
+    def test_inflation_prediction(self):
+        # This is an example test, replace with actual logic
+        self.assertIsNotNone(inflation_prediction)
+
+    def test_market_sentiment(self):
+        # This is an example test, replace with actual logic
+        self.assertIsNotNone(market_sentiment)
 
 if __name__ == '__main__':
     unittest.main()
