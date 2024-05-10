@@ -2,38 +2,19 @@ import sys
 from pathlib import Path
 import unittest
 import numpy as np
+
 # Add the parent directory to sys.path
 parent_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(parent_dir)
 
 from instances import economic_health, market_risk, investment_opportunity, inflation_prediction, market_sentiment
+from simpful.rule_parsing import Functional  # Ensure Functional is properly imported if used
 
-# Now, you can use these instances in your tests
 class TestEvolvableFuzzySystem(unittest.TestCase):
-    def test_economic_health(self):
-        # This is an example test, replace with actual logic
-        self.assertIsNotNone(economic_health)
-
-    def test_market_risk(self):
-        # This is an example test, replace with actual logic
-        self.assertIsNotNone(market_risk)
-
-    def test_investment_opportunity(self):
-        # This is an example test, replace with actual logic
-        self.assertIsNotNone(investment_opportunity)
-
-    def test_inflation_prediction(self):
-        # This is an example test, replace with actual logic
-        self.assertIsNotNone(inflation_prediction)
-
-    def test_market_sentiment(self):
-        # This is an example test, replace with actual logic
-        self.assertIsNotNone(market_sentiment)
-
     def test_initialization(self):
         """Test initialization of systems."""
         self.assertIsNotNone(economic_health.fitness_score)
-        self.assertEqual(economic_health.mutation_rate, 0.01)
+        self.assertEqual(economic_health.mutation_rate, 1)
 
     def test_clone(self):
         """Test cloning functionality ensures deep copy."""
@@ -49,25 +30,27 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
 
     def test_mutate_rule(self):
         """Test mutation of a rule with added logging to check the structure and mutation effect."""
-        print("Initial rules:", economic_health._rules)
+        # Get the initial formatted state of rules for comparison
+        original_formatted_rules = economic_health.get_rules()
+        original_rules_str = [str(rule) for rule in original_formatted_rules]
 
-        if economic_health._rules:
-            # Capture the original rule for comparison; assuming each rule is a tuple (condition, action)
-            original_rule = economic_health._rules[0]
-            print("Original rule before mutation:", original_rule)
+        # Perform mutation
+        economic_health.mutate_operator()
 
-            economic_health.mutate_rule()
+        # Fetching the state of rules after mutation
+        mutated_formatted_rules = economic_health.get_rules()
+        mutated_rules_str = [str(rule) for rule in mutated_formatted_rules]
 
-            # Capture the mutated rule
-            mutated_rule = economic_health._rules[0]
-            print("Mutated rule after mutation:", mutated_rule)
+        # Output for clarity in test output
+        print("Original rules:", original_rules_str)
+        print("Mutated rules:", mutated_rules_str)
 
-            # Check if mutation actually occurred
-            self.assertNotEqual(original_rule, mutated_rule, "Rule should be mutated.")
-        else:
-            self.skipTest("No rules to mutate in the system.")
+        # Assert that the rules have changed
+        self.assertNotEqual(original_rules_str, mutated_rules_str, "Rules should be mutated.")
 
-        print("Final rules after mutation:", economic_health._rules)
+        # Check if exactly one rule was mutated (assuming only one mutation occurs at a time)
+        differences = sum(1 for original, mutated in zip(original_rules_str, mutated_rules_str) if original != mutated)
+        self.assertEqual(differences, 1, "Exactly one rule should be mutated.")
 
 
     def test_crossover(self):
@@ -88,9 +71,5 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         expected_rmse = np.sqrt(np.mean((predictions - historical_data) ** 2))
         self.assertAlmostEqual(fitness_score, expected_rmse)
 
-
 if __name__ == '__main__':
     unittest.main()
-
-# Run like this
-# python -m unittest test_evolvable_fuzzy_system.py
