@@ -54,14 +54,34 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
 
 
     def test_crossover(self):
-        """Test crossover functionality."""
+        """Test crossover functionality to ensure rules are properly exchanged."""
         partner_system = market_risk.clone()
+        original_rules_self = economic_health.get_rules()
+        original_rules_partner = partner_system.get_rules()
+
         offspring1, offspring2 = economic_health.crossover(partner_system)
+        
+        # Ensure offspring are created
         self.assertIsNotNone(offspring1)
         self.assertIsNotNone(offspring2)
-        # Check if offspring have parts of both parents' rules
-        self.assertNotEqual(offspring1._rules, economic_health._rules)
-        self.assertNotEqual(offspring2._rules, market_risk._rules)
+
+        # Ensure the offspring systems contain the swapped rules
+        offspring1_rules = offspring1.get_rules()
+        offspring2_rules = offspring2.get_rules()
+
+        # Check if offspring rules have changed from original
+        self.assertNotEqual(offspring1_rules, original_rules_self)
+        self.assertNotEqual(offspring2_rules, original_rules_partner)
+
+        # More detailed check: ensure at least one rule from each parent is in the opposite offspring
+        # This checks for actual content change, not just reference or length change
+        self.assertTrue(any(rule in offspring2_rules for rule in original_rules_self))
+        self.assertTrue(any(rule in offspring1_rules for rule in original_rules_partner))
+
+        # Length of rules should not change
+        self.assertEqual(len(offspring1_rules), len(original_rules_self))
+        self.assertEqual(len(offspring2_rules), len(original_rules_partner))
+
 
     def test_evaluate_fitness(self):
         """Test fitness evaluation based on RMSE."""
