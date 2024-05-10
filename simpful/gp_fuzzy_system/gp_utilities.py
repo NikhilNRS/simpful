@@ -19,16 +19,6 @@ def roulette_wheel_selection(population, fitness_scores):
     return [population[i] for i in selected_indices]
 
 
-def uniform_crossover(parent1, parent2, crossover_rate=0.5):
-    """Performs uniform crossover between two parents."""
-    child1, child2 = parent1.clone(), parent2.clone()
-    # Ensure this logic aligns with how rules are structured and accessed in EvolvableFuzzySystem
-    for i in range(len(parent1.rules)):
-        if np.random.rand() < crossover_rate:
-            child1.rules[i], child2.rules[i] = child2.rules[i], child1.rules[i]
-    return child1, child2
-
-
 def find_logical_operators(sentence):
     pattern = r'\b(AND|OR|NOT)\b'
     matches = re.finditer(pattern, sentence, re.IGNORECASE)
