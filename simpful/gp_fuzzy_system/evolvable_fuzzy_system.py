@@ -1,36 +1,63 @@
 from simpful import FuzzySystem
 import numpy as np
 from copy import deepcopy
+import gp_utilities
+import random
+import re
 
 class EvolvableFuzzySystem(FuzzySystem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fitness_score = None
-        self.mutation_rate = 0.01  # Adjustable mutation rate for evolution
+        self.mutation_rate = 1  # Adjustable mutation rate for evolution
 
     def clone(self):
         """Creates a deep copy of the system, ensuring independent instances."""
         return deepcopy(self)
 
+    def get_rules(self):
+        """
+        Fetch and format the rules, removing unnecessary parentheses.
+        """
+        rules = super().get_rules()
+        return self.format_rules(rules)
+
+    @staticmethod
+    def format_rules(rules):
+        formatted_rules = []
+        pattern = r'^IF \(\((.*)\)\) THEN (.*)$'
+        for rule in rules:
+            match = re.match(pattern, rule)
+            if match:
+                condition = match.group(1)
+                consequence = match.group(2)
+                formatted_rule = f"IF ({condition}) THEN {consequence}"
+                formatted_rules.append(formatted_rule)
+            else:
+                formatted_rules.append(rule)
+        return formatted_rules
+
     def add_rule(self, rule):
         """Adds a new fuzzy rule to the system."""
         super().add_rules([rule])
 
-    def mutate_rule(self):
-        """Applies mutation to a randomly selected rule within the system."""
-        if not self._rules:
-            return  # No operation if there are no rules
-        rule_index = np.random.randint(len(self._rules))
-        # Access the rule condition directly assuming the structure is [condition, action]
-        original_condition = self._rules[rule_index][0]
-        # Perform some mutation on the condition; this is a placeholder for your mutation logic
-        mutated_condition = self._mutate_rule_logic(original_condition)
-        # Update the rule with the mutated condition
-        self._rules[rule_index] = (mutated_condition, self._rules[rule_index][1])
+    def mutate_operator(self):
+        """Selects a random rule, mutates it, and replaces the original with the new one."""
+        current_rules = self.get_rules()  # Fetch current rules using the formatted get_rules
+        if not current_rules:
+            print("No rules available to mutate.")
+            return  # Exit if there are no rules to mutate
 
-    def _mutate_rule_logic(self, condition):
-        """A simple example mutation that toggles 'IS' to 'IS NOT' and vice versa."""
-        return condition.replace("IS", "IS NOT") if "IS" in condition else condition.replace("IS NOT", "IS")
+        # Mutate a random rule using the helper function
+        mutated_rule = gp_utilities.mutate_a_rule_in_list(current_rules)
+        
+        # Find the index of the original rule and replace it
+        original_rule = random.choice(current_rules)  # This is simplified; you might need a better way to select the specific rule
+        rule_index = current_rules.index(original_rule)
+        
+        # Replace the mutated rule in the system
+        self.replace_rule(rule_index, mutated_rule, verbose=True)
+
 
     def crossover(self, partner_system):
         """Performs crossover between this system and another, exchanging rules."""
@@ -52,6 +79,10 @@ class EvolvableFuzzySystem(FuzzySystem):
         rmse = np.sqrt(np.mean((np.array(predictions) - np.array(historical_data)) ** 2))
         self.fitness_score = rmse
         return self.fitness_score
+
+if __name__ == "__main__":
+    pass
+
 
 
 """

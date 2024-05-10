@@ -1,4 +1,6 @@
 import numpy as np
+import re
+import random
 
 def tournament_selection(population, fitness_scores, tournament_size=3):
     """Implements tournament selection."""
@@ -26,20 +28,45 @@ def uniform_crossover(parent1, parent2, crossover_rate=0.5):
             child1.rules[i], child2.rules[i] = child2.rules[i], child1.rules[i]
     return child1, child2
 
-def point_mutation(system, mutation_rate):
-    """Applies point mutation to a system's rules."""
-    for i in range(len(system.rules)):
-        if np.random.rand() < mutation_rate:
-            # Placeholder for mutation logic specific to your fuzzy rules
-            system.mutate_rule(i)  # Assume mutate_rule can now target specific rules by index
 
-def generate_new_individual(template_system):
-    """Generates a new individual based on a template EvolvableFuzzySystem."""
-    new_system = template_system.clone()
-    # Apply one or more mutations to ensure diversity
-    new_system.mutate_rule()
-    return new_system
+def find_logical_operators(sentence):
+    pattern = r'\b(AND|OR|NOT)\b'
+    matches = re.finditer(pattern, sentence, re.IGNORECASE)
+    results = [{'operator': match.group(), 'index': match.start()} for match in matches]
+    return results, len(results)
 
+def mutate_logical_operator(sentence):
+    operators, count = find_logical_operators(sentence)
+    if count == 0:
+        return sentence  # No operators to mutate
+    chosen = random.choice(operators)
+    old_operator = chosen['operator']
+    index = chosen['index']
+    alternatives = {'AND', 'OR', 'NOT'}
+    alternatives.discard(old_operator)
+    new_operator = random.choice(list(alternatives))
+    mutated_sentence = sentence[:index] + new_operator + sentence[index + len(old_operator):]
+    return mutated_sentence
+
+def mutate_a_rule_in_list(rules):
+    if not rules:
+        return "No rules to mutate."
+    # Select a random rule
+    random_rule = random.choice(rules)
+    # Mutate this rule
+    mutated_rule = mutate_logical_operator(random_rule)
+    return mutated_rule
+
+# Example usage:
+rules_list = [
+    "IF (gdp_growth_annual_prcnt IS Low) AND (unemployment_rate_value IS High) THEN (PricePrediction IS PricePrediction)",
+    "IF (trade_balance_value IS Low) OR (foreign_direct_investment_value IS Low) THEN (PricePrediction IS PricePrediction)"
+]
+
+# Call the function to mutate a rule
+mutated_rule = mutate_a_rule_in_list(rules_list)
+print("Original Rule:", rules_list[1])  # Choose the second rule as an example
+print("Mutated Rule:", mutated_rule)
 
 """
 To-Do List for Future Development of gp_utilities.py:
