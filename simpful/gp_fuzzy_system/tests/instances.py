@@ -194,7 +194,8 @@ inflation_prediction.set_output_function("PricePrediction", " + ".join([f"1*{nam
 market_sentiment_features = ["macd", "rsi", "volume", "spy_close"]
 market_sentiment.set_output_function("PricePrediction", " + ".join([f"1*{name}" for name in market_sentiment_features]))
 
-def make_predictions_with_models(instances, features_dict, file_path):
+def make_predictions_with_models(instances, features_dict, file_path, print_predictions=False):
+    all_predictions = {}
     # Subset and predict for each system
     for system_name, system in instances.items():
         # Use the feature names for the current system from our dictionary
@@ -213,14 +214,20 @@ def make_predictions_with_models(instances, features_dict, file_path):
                 system.set_variable(feature_name, row[feature_name])
             
             # Perform Sugeno inference and add the result to our predictions list
-            # Assuming 'PricePrediction' is the outcome variable for all systems
             prediction = system.Sugeno_inference(["PricePrediction"])
             predictions.append(prediction)
         
-        # Print or return predictions
-        print(f"{system_name} Predictions:")
-        for pred in predictions[:5]:  # Print the first 5 predictions as an example
-            print(pred)
+        # Store predictions for each system
+        all_predictions[system_name] = predictions
+
+        # Optionally print the first 5 predictions
+        if print_predictions:
+            print(f"{system_name} Predictions:")
+            for pred in predictions[:5]:  # Print the first 5 predictions as an example
+                print(pred)
+
+    return all_predictions
+
 
 
 if __name__ == "__main__":

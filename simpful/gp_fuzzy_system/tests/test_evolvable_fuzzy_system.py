@@ -2,13 +2,14 @@ import sys
 from pathlib import Path
 import unittest
 import numpy as np
+import pandas as pd
 import re
 
 # Add the parent directory to sys.path
 parent_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(parent_dir)
 
-from instances import economic_health, market_risk, investment_opportunity, inflation_prediction, market_sentiment
+from instances import economic_health, market_risk, investment_opportunity, inflation_prediction, market_sentiment, make_predictions_with_models
 from simpful.rule_parsing import Functional  # Ensure Functional is properly imported if used
 
 class TestEvolvableFuzzySystem(unittest.TestCase):
@@ -139,8 +140,6 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         # Check that the offspring are different from each other
         self.assertNotEqual(offspring1._rules, offspring2._rules, "The two offspring should have different rules")
 
-
-
     def test_evaluate_fitness(self):
         """Test fitness evaluation based on RMSE."""
         historical_data = np.array([1, 2, 3, 4, 5])
@@ -148,6 +147,25 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         fitness_score = economic_health.evaluate_fitness(historical_data, predictions)
         expected_rmse = np.sqrt(np.mean((predictions - historical_data) ** 2))
         self.assertAlmostEqual(fitness_score, expected_rmse)
+    
+    def test_predict_with_models(self):
+        """Test predictions using the predefined function from instances.py."""
+        # Load data for testing
+        # Assuming 'selected_variables_first_100.csv' has been properly formatted and loaded
+        # Since I can't directly access the file contents here, I'll outline a generic approach:
+        
+        test_data = pd.read_csv('/path/to/selected_variables_first_100.csv')
+        feature_names = test_data.columns.tolist()  # Assuming this is how features are structured
+
+        # Call the prediction function directly
+        predictions = make_predictions_with_models(economic_health, feature_names, test_data)
+
+        # Here you should define what you expect as a result to verify the predictions
+        # This part of the test will depend on what you define as correct or expected behavior
+        # For example, if you expect a list of predictions:
+        self.assertIsInstance(predictions, list, "Predictions should be returned as a list")
+        self.assertGreater(len(predictions), 0, "There should be at least one prediction made")
+
 
 if __name__ == '__main__':
     unittest.main()
