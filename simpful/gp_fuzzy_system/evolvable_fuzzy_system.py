@@ -10,7 +10,7 @@ class EvolvableFuzzySystem(FuzzySystem):
         super().__init__(*args, **kwargs)
         self.fitness_score = None
         self.mutation_rate = 1  # Adjustable mutation rate for evolution
-        self.available_features = ['gdp_growth_annual_prcnt', 'unemployment_rate_value', 'trade_balance_value', 'foreign_direct_investment_value']  # Example features
+        self.available_features = []  # Example features
 
 
     def clone(self):
@@ -116,6 +116,63 @@ class EvolvableFuzzySystem(FuzzySystem):
         self.fitness_score = rmse
         return self.fitness_score
 
+    def extract_features_from_rules(self):
+        """Extract unique features from the current fuzzy rules."""
+        current_rules = self.get_rules()  # Assuming get_rules fetches the current fuzzy rules
+        if not current_rules:
+            print("No rules to analyze.")
+            return []
+
+        features_set = set()
+        for rule in current_rules:
+            # Find all alphanumeric words in the rule; assume they include feature names
+            words = re.findall(r'\w+', rule)
+            features_in_rule = [word for word in words if word in self.available_features]
+            features_set.update(features_in_rule)
+
+        return list(features_set)
+    
+    def predict_with_fis(self, data, print_predictions=False):
+        """
+        Makes predictions for the EvolvableFuzzySystem instance using the features defined in its rules.
+
+        :param data: pandas DataFrame containing the input data.
+        :param print_predictions: Boolean, if True, prints the first 5 predictions.
+        :return: List of predictions.
+        """
+        # Extract features used in the rules of this fuzzy system
+        features_used = self.extract_features_from_rules()
+
+        # Ensure the DataFrame contains all necessary features
+        if not all(feature in data.columns for feature in features_used):
+            missing_features = [feature for feature in features_used if feature not in data.columns]
+            raise ValueError(f"Data is missing required features: {missing_features}")
+        
+        # Subset the DataFrame based on the features used in this system
+        subset_data = data[features_used]
+
+        # Initialize an empty list to store predictions
+        predictions = []
+
+        # Iterate through each row in the subset data to make predictions
+        for index, row in subset_data.iterrows():
+            # Set each variable in the system to its value in the current row
+            for feature_name in features_used:
+                self.set_variable(feature_name, row[feature_name])
+            
+            # Perform Sugeno inference and add the result to our predictions list
+            prediction = self.Sugeno_inference(["PricePrediction"])
+            predictions.append(prediction)
+
+        # Optionally print the first 5 predictions
+        if print_predictions:
+            print(f"{self.__class__.__name__} Predictions:")
+            for pred in predictions[:5]:  # Print the first 5 predictions as an example
+                print(pred)
+
+        return predictions
+
+
 if __name__ == "__main__":
     pass
 
@@ -127,20 +184,12 @@ Refined To-Do List for Future Enhancements:
 1. Advanced Selection Mechanism:
    - Implement or integrate advanced selection mechanisms to evaluate and pick individuals according to fitness metrics such as precision, RMSE, or custom evaluation functions.
 
-2. Crossover Operator for Rule Exchange:
-   - Refine the crossover operator to efficiently exchange rules between individuals, considering rule compatibility and aiming to preserve or enhance rule effectiveness.
-
-3. Dynamic Mutation of Rule Structure:
+2. Dynamic Mutation of Rule Structure:
    - Expand mutation operations to allow for structural modifications of individuals, such as swapping variables within rules or changing the logical structure of conditions.
 
-4. Feature Selection Through Genetic Programming:
-   - Integrate mechanisms that implicitly perform feature selection during the evolutionary process, identifying and prioritizing the most informative variables for prediction.
-
-5. Scalability and Efficiency Enhancements:
+3. Scalability and Efficiency Enhancements:
    - Assess and optimize the computational efficiency and scalability of the system, ensuring it can handle large datasets and complex rule sets.
 
-6. Experimentation and Evaluation Framework:
-    - Develop a comprehensive framework for testing and evaluating the evolved fuzzy systems across various datasets, focusing on generalization ability and predictive accuracy.
-
-Each of these enhancements contributes directly to evolving fuzzy rule sets for data-driven solutions, aligning with the dissertation's objectives to address design problems through genetic programming. Focus on incremental development, ensuring each enhancement strengthens the system's ability to evolve and evaluate fuzzy rule sets effectively.
+Each of these enhancements contributes directly to evolving fuzzy rule sets for data-driven solutions, aligning with the dissertation's objectives to address design problems through genetic programming. 
+Focus on incremental development, ensuring each enhancement strengthens the system's ability to evolve and evaluate fuzzy rule sets effectively.
 """

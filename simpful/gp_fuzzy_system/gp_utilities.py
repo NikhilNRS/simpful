@@ -47,6 +47,8 @@ def mutate_a_rule_in_list(rules):
     mutated_rule = mutate_logical_operator(random_rule)
     return mutated_rule
 
+
+
 # Example usage:
 rules_list = [
     "IF (gdp_growth_annual_prcnt IS Low) AND (unemployment_rate_value IS High) THEN (PricePrediction IS PricePrediction)",
