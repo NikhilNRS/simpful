@@ -10,6 +10,8 @@ class EvolvableFuzzySystem(FuzzySystem):
         super().__init__(*args, **kwargs)
         self.fitness_score = None
         self.mutation_rate = 1  # Adjustable mutation rate for evolution
+        self.available_features = ['gdp_growth_annual_prcnt', 'unemployment_rate_value', 'trade_balance_value', 'foreign_direct_investment_value']  # Example features
+
 
     def clone(self):
         """Creates a deep copy of the system, ensuring independent instances."""
@@ -41,6 +43,36 @@ class EvolvableFuzzySystem(FuzzySystem):
         """Adds a new fuzzy rule to the system."""
         super().add_rules([rule])
 
+    def mutate_feature(self):
+            """Mutates a feature within a rule by replacing it with another from the available features list."""
+            current_rules = self.get_rules()  # Fetch current rules using the formatted get_rules
+            if not current_rules:
+                print("No rules available to mutate.")
+                return  # Exit if there are no rules to mutate
+            
+            # Select a random rule to mutate
+            rule_index = random.randint(0, len(current_rules) - 1)
+            original_rule = current_rules[rule_index]
+
+            # Extract all words from the rule, assuming features are identifiable as whole words
+            words = re.findall(r'\w+', original_rule)
+            features_in_rule = [word for word in words if word in self.available_features]
+
+            if not features_in_rule:
+                print("No features found in the rule to mutate.")
+                return  # Exit if the selected rule has no recognizable features
+
+            # Choose a feature to replace
+            feature_to_replace = random.choice(features_in_rule)
+            # Choose a new feature, ensuring it's different from the one to replace
+            new_feature = random.choice([feat for feat in self.available_features if feat != feature_to_replace])
+
+            # Replace the feature in the rule
+            mutated_rule = original_rule.replace(feature_to_replace, new_feature)
+
+            # Replace the mutated rule in the system
+            self.replace_rule(rule_index, mutated_rule, verbose=True)
+
     def mutate_operator(self):
         """Selects a random rule, mutates it, and replaces the original with the new one."""
         current_rules = self.get_rules()  # Fetch current rules using the formatted get_rules
@@ -48,16 +80,15 @@ class EvolvableFuzzySystem(FuzzySystem):
             print("No rules available to mutate.")
             return  # Exit if there are no rules to mutate
 
-        # Mutate a random rule using the helper function
-        mutated_rule = gp_utilities.mutate_a_rule_in_list(current_rules)
-        
-        # Find the index of the original rule and replace it
-        original_rule = random.choice(current_rules)  # This is simplified; you might need a better way to select the specific rule
-        rule_index = current_rules.index(original_rule)
+        # Select a random rule to mutate
+        rule_index = random.randint(0, len(current_rules) - 1)
+        original_rule = current_rules[rule_index]
+
+        # Mutate this selected rule
+        mutated_rule = gp_utilities.mutate_logical_operator(original_rule)
         
         # Replace the mutated rule in the system
         self.replace_rule(rule_index, mutated_rule, verbose=True)
-
 
     def crossover(self, partner_system):
         """Performs crossover between this system and another, exchanging rules at potentially different indices."""
