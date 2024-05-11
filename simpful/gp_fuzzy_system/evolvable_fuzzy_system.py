@@ -60,30 +60,24 @@ class EvolvableFuzzySystem(FuzzySystem):
 
 
     def crossover(self, partner_system):
-        """Performs a single-rule crossover between this system and another."""
-        # Ensure both systems have rules to exchange
+        """Performs crossover between this system and another, exchanging rules at potentially different indices."""
         if not self._rules or not partner_system._rules:
-            print("One of the systems has no rules to exchange.")
+            print("No rules available to crossover.")
             return None, None
 
-        # Use clone to work with independent copies
+        # Randomly select a rule index from each system
+        index_self = random.randint(0, len(self._rules) - 1)
+        index_partner = random.randint(0, len(partner_system._rules) - 1)
+
+        # Use clone to ensure that we're working with independent copies
         new_self = self.clone()
         new_partner = partner_system.clone()
 
-        # Randomly select indices for the rules to swap
-        self_rule_index = random.randint(0, len(new_self._rules) - 1)
-        partner_rule_index = random.randint(0, len(new_partner._rules) - 1)
-
-        # Get the actual rules
-        self_rule = new_self.get_rules()[self_rule_index]
-        partner_rule = new_partner.get_rules()[partner_rule_index]
-
-        # Swap the rules
-        new_self.replace_rule(self_rule_index, partner_rule, verbose=True)
-        new_partner.replace_rule(partner_rule_index, self_rule, verbose=True)
+        # Swap the rules at the selected indices
+        new_self._rules[index_self], new_partner._rules[index_partner] = \
+            new_partner._rules[index_partner], new_self._rules[index_self]
 
         return new_self, new_partner
-
 
     def evaluate_fitness(self, historical_data, predictions):
         """Calculates the fitness score based on a comparison metric like RMSE."""

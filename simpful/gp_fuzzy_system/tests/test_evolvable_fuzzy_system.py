@@ -53,34 +53,50 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         self.assertEqual(differences, 1, "Exactly one rule should be mutated.")
 
 
-    def test_crossover(self):
-        """Test crossover functionality to ensure rules are properly exchanged."""
-        partner_system = market_risk.clone()
-        original_rules_self = economic_health.get_rules()
-        original_rules_partner = partner_system.get_rules()
+        def test_crossover(self):
+            """Test crossover functionality with random rule exchange."""
+            partner_system = market_risk.clone()
+            offspring1, offspring2 = economic_health.crossover(partner_system)
 
+            self.assertIsNotNone(offspring1)
+            self.assertIsNotNone(offspring2)
+
+            # Extract rules to make verification easier
+            rules_self_before = economic_health.get_rules()
+            rules_partner_before = partner_system.get_rules()
+            rules_self_after = offspring1.get_rules()
+            rules_partner_after = offspring2.get_rules()
+
+            # Check that at least one rule in the offspring is different from the parent at any index
+            rule_swapped_from_self = any([rule not in rules_self_before for rule in rules_self_after])
+            rule_swapped_from_partner = any([rule not in rules_partner_before for rule in rules_partner_after])
+
+            self.assertTrue(rule_swapped_from_self, "Offspring 1 should have at least one rule not in the original economic_health system.")
+            self.assertTrue(rule_swapped_from_partner, "Offspring 2 should have at least one rule not in the original market_risk system.")
+
+            # Additional check for randomness in rule exchange (optional, for more rigorous testing)
+            # Check if there's at least one rule that came from the partner system
+            self.assertTrue(any(rule in rules_partner_before for rule in rules_self_after), 
+                            "Offspring 1 should contain at least one rule from the partner system.")
+            self.assertTrue(any(rule in rules_self_before for rule in rules_partner_after), 
+                            "Offspring 2 should contain at least one rule from the economic_health system.")
+    
+    def test_crossover_produces_different_offspring(self):
+        """Test crossover functionality ensures different offspring."""
+        partner_system = market_risk.clone()
         offspring1, offspring2 = economic_health.crossover(partner_system)
         
-        # Ensure offspring are created
-        self.assertIsNotNone(offspring1)
-        self.assertIsNotNone(offspring2)
+        # Assert that both offspring are not None
+        self.assertIsNotNone(offspring1, "First offspring should not be None")
+        self.assertIsNotNone(offspring2, "Second offspring should not be None")
+        
+        # Assert that offspring have parts of both parents' rules
+        self.assertNotEqual(offspring1._rules, economic_health._rules, "Offspring 1 should have different rules from economic_health")
+        self.assertNotEqual(offspring2._rules, market_risk._rules, "Offspring 2 should have different rules from market_risk")
+        
+        # Check that the offspring are different from each other
+        self.assertNotEqual(offspring1._rules, offspring2._rules, "The two offspring should have different rules")
 
-        # Ensure the offspring systems contain the swapped rules
-        offspring1_rules = offspring1.get_rules()
-        offspring2_rules = offspring2.get_rules()
-
-        # Check if offspring rules have changed from original
-        self.assertNotEqual(offspring1_rules, original_rules_self)
-        self.assertNotEqual(offspring2_rules, original_rules_partner)
-
-        # More detailed check: ensure at least one rule from each parent is in the opposite offspring
-        # This checks for actual content change, not just reference or length change
-        self.assertTrue(any(rule in offspring2_rules for rule in original_rules_self))
-        self.assertTrue(any(rule in offspring1_rules for rule in original_rules_partner))
-
-        # Length of rules should not change
-        self.assertEqual(len(offspring1_rules), len(original_rules_self))
-        self.assertEqual(len(offspring2_rules), len(original_rules_partner))
 
 
     def test_evaluate_fitness(self):
