@@ -112,11 +112,8 @@ class EvolvableFuzzySystem(FuzzySystem):
         rule_index = random.randint(0, len(current_rules) - 1)
         original_rule = current_rules[rule_index]
 
-        # Extract features from the selected rule
-        features = self.extract_features_from_rule(original_rule)
-
         # Mutate this selected rule using the extracted features
-        mutated_rule = gp_utilities.mutate_logical_operator(original_rule, features)
+        mutated_rule = gp_utilities.mutate_logical_operator(original_rule)
 
         # Replace the mutated rule in the system
         self.replace_rule(rule_index, mutated_rule, verbose=True)

@@ -87,7 +87,7 @@ def remove_not_operator(index, sentence, verbose):
     return mutated_sentence
 
 
-def mutate_logical_operator(sentence, features, verbose=True, mutate_target=None):
+def mutate_logical_operator(sentence, verbose=True, mutate_target=None):
     # Retrieve operator details using the updated find_logical_operators
     operator_details = find_logical_operators(sentence)
     
