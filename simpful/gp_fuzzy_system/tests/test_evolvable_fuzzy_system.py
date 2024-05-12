@@ -16,14 +16,10 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """Setup shared resources or configurations for tests."""
-        # Adding the feature list directly in class for broader availability
-        cls.available_features = [
-            'gdp_growth_annual_prcnt', 'unemployment_rate_value', 
-            'trade_balance_value', 'foreign_direct_investment_value', 
-            'spy_close', 'volume', 'gld_close', 'macd', 'rsi', 
-            'inflation_rate_value'
-        ]
+        # Load the CSV data
+        cls.test_data = pd.read_csv(Path(__file__).resolve().parent / 'selected_variables_first_100.csv')
+        # Set available features for economic_health based on test data
+        economic_health.available_features = cls.test_data.columns.tolist()
         # Assuming `economic_health` is already imported and setup
         economic_health.available_features = cls.available_features
 
@@ -130,24 +126,17 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         fitness_score = economic_health.evaluate_fitness(historical_data, predictions)
         expected_rmse = np.sqrt(np.mean((predictions - historical_data) ** 2))
         self.assertAlmostEqual(fitness_score, expected_rmse)
-    
-    def test_predict_with_models(self):
-        """Test predictions using the predefined function from instances.py."""
-        # Load data for testing
-        # Assuming 'selected_variables_first_100.csv' has been properly formatted and loaded
-        # Since I can't directly access the file contents here, I'll outline a generic approach:
-        
-        test_data = pd.read_csv('selected_variables_first_100.csv')
-        feature_names = test_data.columns.tolist()  # Assuming this is how features are structured
 
-        # Call the prediction function directly
-        predictions = make_predictions_with_models(economic_health, feature_names, test_data)
+    def test_predict_with_fis(self):
+        """Test the predict_with_fis function to ensure it uses the rule-based features correctly."""
+        # Ensure economic_health has been initialized and has rules
+        self.assertTrue(economic_health._rules, "economic_health should have rules initialized")
+        # Call the predict_with_fis function
+        predictions = economic_health.predict_with_fis(self.test_data)
+        # Ensure predictions are returned as expected
+        self.assertIsInstance(predictions, list, "Should return a list of predictions")
+        self.assertEqual(len(predictions), len(self.test_data), "Should return one prediction per data row")
 
-        # Here you should define what you expect as a result to verify the predictions
-        # This part of the test will depend on what you define as correct or expected behavior
-        # For example, if you expect a list of predictions:
-        self.assertIsInstance(predictions, list, "Predictions should be returned as a list")
-        self.assertGreater(len(predictions), 0, "There should be at least one prediction made")
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ import re
 class EvolvableFuzzySystem(FuzzySystem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fitness_score = None
+        self.fitness_score = 0
         self.mutation_rate = 1  # Adjustable mutation rate for evolution
         self.available_features = []  # Example features
 
