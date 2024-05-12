@@ -64,6 +64,16 @@ def remove_not_operator(index, sentence, verbose):
 
 
 def mutate_logical_operator(sentence, features, verbose=True, mutate_target=None):
+    # Dictionary to map transitions and associated functions
+    transition_map = {
+        ('AND', 'OR'): lambda idx, sent: sent[:idx] + 'OR' + sent[idx + len('AND'):],
+        ('OR', 'AND'): lambda idx, sent: sent[:idx] + 'AND' + sent[idx + len('OR'):],
+        ('AND', 'NOT'): lambda idx, sent: insert_not_operator(idx, sent, verbose),
+        ('OR', 'NOT'): lambda idx, sent: insert_not_operator(idx, sent, verbose),
+        ('NOT', 'NOT'): lambda idx, sent: remove_not_operator(idx, sent, verbose),
+        # ('NOT', 'AND') and ('NOT', 'OR') are not allowed, handle them explicitly if needed
+    }
+
     operators, count = find_logical_operators(sentence)
     if count == 0:
         if verbose:
@@ -72,26 +82,26 @@ def mutate_logical_operator(sentence, features, verbose=True, mutate_target=None
 
     if mutate_target:
         chosen = mutate_target
+        new_operator = chosen.get('new_operator', chosen['operator']).upper()  # Default to the old operator if not specified
     else:
         chosen = random.choice(operators)
+        new_operator = None  # Determine dynamically if not given
 
     old_operator = chosen['operator'].upper()
     index = chosen['index']
 
-    # Set alternatives based on current operator
-    if old_operator == 'NOT':
-        new_operator = 'NOT'  # NOT must remain NOT (removal or adjustment)
-        mutated_sentence = remove_not_operator(index, sentence, verbose)
-    elif old_operator == 'AND':
-        new_operator = 'OR'  # Directly toggle AND to OR or vice versa
-        mutated_sentence = sentence[:index] + 'OR' + sentence[index + len('AND'):]
-    elif old_operator == 'OR':
-        new_operator = 'AND'
-        mutated_sentence = sentence[:index] + 'AND' + sentence[index + len('OR'):]
+    # Decide on the new operator if not predefined
+    if not new_operator:
+        new_operator = 'OR' if old_operator == 'AND' else 'AND' if old_operator == 'OR' else 'NOT'
+
+    # Use the transition map to determine the mutation function
+    key = (old_operator, new_operator)
+    if key in transition_map:
+        mutated_sentence = transition_map[key](index, sentence)
     else:
-        # This should never be reached since operators should be one of AND, OR, or NOT
-        new_operator = old_operator  # Fallback to do nothing
-        mutated_sentence = sentence
+        if verbose:
+            print(f"Invalid transition from {old_operator} to {new_operator}. No mutation performed.")
+        return sentence  # Return original sentence if the transition is not allowed
 
     if verbose:
         print(f"Mutating operator: {old_operator} at index {index} to {new_operator}")
@@ -99,6 +109,8 @@ def mutate_logical_operator(sentence, features, verbose=True, mutate_target=None
         print(f"Mutated sentence: {mutated_sentence}")
 
     return mutated_sentence
+
+
 
 
 
