@@ -18,56 +18,82 @@ def roulette_wheel_selection(population, fitness_scores):
     selected_indices = np.random.choice(len(population), size=len(population), p=probability_distribution)
     return [population[i] for i in selected_indices]
 
-
-def find_logical_operators(sentence):
-    # This pattern looks for logical operators and considers the whole sentence structure.
-    pattern = r'\b(AND|OR|NOT)\b'
-    matches = re.finditer(pattern, sentence, re.IGNORECASE)
-    results = [{'operator': match.group(), 'index': match.start()} for match in matches]
-    return results, len(results)
-
-
 def find_logical_operators(sentence):
     pattern = r'\b(AND|OR|NOT)\b'
     matches = re.finditer(pattern, sentence, re.IGNORECASE)
     results = [{'operator': match.group(), 'index': match.start()} for match in matches]
     return results, len(results)
 
-def choose_new_operator(old_operator, sentence):
-    alternatives = {'AND', 'OR'}
-    if 'NOT' not in sentence:  # Allow adding NOT if it's not already in the rule
-        alternatives.add('NOT')
-    alternatives.discard(old_operator)
-    return random.choice(list(alternatives))
-
-def handle_not_operator(index, old_operator, new_operator, sentence, verbose):
-    # We need to insert NOT directly before a condition with parentheses
-    next_condition = re.search(r'\b\w+\b IS \b\w+\b', sentence[index + len(old_operator):])
-    if next_condition:
-        condition_start = next_condition.start()
-        new_operator = 'NOT ('
-        end_part = ')' + sentence[index + len(old_operator) + condition_start:]
-        mutated_sentence = sentence[:index + len(old_operator) + condition_start] + new_operator + end_part
+def choose_new_operator(old_operator, alternatives, context):
+    if old_operator == 'NOT':
+        # Removing NOT, ensure it's logical to do so
+        return random.choice(list(alternatives - {'NOT'}))
     else:
-        if verbose:
-            print("No valid condition found for NOT operator insertion.")
-        mutated_sentence = sentence  # If no valid next condition, return the sentence unchanged
-    return mutated_sentence
+        # If 'NOT' is in context, ensure its addition is logical
+        if 'NOT' not in context:
+            alternatives.add('NOT')
+        return random.choice(list(alternatives))
 
-def remove_not_parentheses(index, old_operator, new_operator, sentence, verbose):
+def remove_not_parentheses(index, sentence, verbose):
     try:
-        open_paren_index = sentence.rindex('(', 0, index)
-        close_paren_index = sentence.index(')', index)
-        mutated_sentence = (sentence[:open_paren_index] +
-                            sentence[open_paren_index+1:index] +
-                            new_operator +
-                            sentence[index+len(old_operator)+1:close_paren_index] +
-                            sentence[close_paren_index+1:])
+        # Adjust to remove parentheses correctly around the condition `NOT` was negating
+        start_paren = sentence.rindex('(', 0, index)
+        end_paren = sentence.index(')', index + len('NOT'))
+        mutated_sentence = sentence[:start_paren] + sentence[start_paren + 1:index] + sentence[index + len('NOT') + 1:end_paren] + sentence[end_paren + 1:]
     except ValueError:
         if verbose:
             print("Error removing parentheses for NOT operator.")
-        mutated_sentence = sentence
+        mutated_sentence = sentence  # Return unchanged if parentheses can't be adjusted
     return mutated_sentence
+
+def insert_not_operator(index, sentence, verbose):
+    # Find the immediate next logical condition to apply "NOT"
+    match = re.search(r'(\b\w+\b IS \b\w+\b)', sentence[index:])
+    if match:
+        condition_start = index + match.start()
+        condition_end = condition_start + len(match.group(1))
+        mutated_sentence = sentence[:condition_start] + 'NOT (' + match.group(1) + ')' + sentence[condition_end:]
+        if verbose:
+            print(f"Inserting NOT: Condition '{match.group(1)}' found at {condition_start}-{condition_end}, mutated to: {mutated_sentence}")
+    else:
+        mutated_sentence = sentence
+        if verbose:
+            print("No suitable condition found for NOT insertion after the operator.")
+    return mutated_sentence
+
+def remove_not_operator(index, sentence, verbose):
+    try:
+        start_paren = sentence.rindex('(', 0, index)
+        end_paren = sentence.index(')', index)
+        mutated_sentence = sentence[:start_paren] + sentence[start_paren + 1:index] + sentence[index + 4:end_paren] + sentence[end_paren + 1:]
+        if verbose:
+            print(f"Removed NOT: Adjusted from '{sentence[start_paren:end_paren+1]}' to '{mutated_sentence}'")
+    except ValueError as e:
+        mutated_sentence = sentence
+        if verbose:
+            print(f"Failed to remove NOT due to parsing error: {e}")
+    return mutated_sentence
+
+def adjust_not_operator(index, sentence, old_operator, new_operator, verbose):
+    if old_operator == 'NOT' and new_operator == 'NOT':
+        # Negating a negation essentially removes NOT
+        if verbose:
+            print(f"Negating a negation at index {index}, effectively removing NOT.")
+        return remove_not_operator(index, sentence, verbose)
+    elif old_operator == 'NOT':
+        # Change from NOT to another operator (though this should be handled differently as NOT shouldn't convert directly to AND/OR)
+        if verbose:
+            print(f"Error: Incorrect use of adjust_not_operator to convert 'NOT' to '{new_operator}'.")
+        return sentence  # Return unchanged as fallback for incorrect usage
+    elif new_operator == 'NOT':
+        # Insert NOT
+        return insert_not_operator(index, sentence, verbose)
+    else:
+        # Standard operator replacement which should not happen via this function but handled in the main function
+        if verbose:
+            print("Error: adjust_not_operator called without NOT involved.")
+        return sentence  # Return unchanged as a fallback
+
 
 def mutate_logical_operator(sentence, verbose=True):
     operators, count = find_logical_operators(sentence)
@@ -79,19 +105,26 @@ def mutate_logical_operator(sentence, verbose=True):
     chosen = random.choice(operators)
     old_operator = chosen['operator'].upper()  # Normalize to upper case
     index = chosen['index']
-    new_operator = choose_new_operator(old_operator, sentence)
+    alternatives = {'AND', 'OR'}
+
+    if old_operator == 'NOT':
+        # Since 'NOT' is special, handle its removal or maintain as is
+        new_operator = 'NOT'  # Simulate removal or modification scenario
+    else:
+        alternatives.discard(old_operator)  # Remove the current operator from possible choices
+        if 'NOT' not in sentence[index - 4:index + 4]:  # Simple check around the operator position
+            alternatives.add('NOT')
+        new_operator = random.choice(list(alternatives))
 
     if verbose:
         print(f"Mutating operator: {old_operator} to {new_operator}")
 
-    # Handling the insertion of NOT specifically to ensure correct syntax
-    if new_operator == 'NOT':
-        mutated_sentence = handle_not_operator(index, old_operator, new_operator, sentence, verbose)
-    elif old_operator == 'NOT':
-        mutated_sentence = remove_not_parentheses(index, old_operator, new_operator, sentence, verbose)
+    # Handle 'NOT' adjustments or standard operator replacement
+    if 'NOT' in {old_operator, new_operator}:
+        mutated_sentence = adjust_not_operator(index, sentence, old_operator, new_operator, verbose)
     else:
-        end_part = sentence[index + len(old_operator):]
-        mutated_sentence = sentence[:index] + new_operator + end_part
+        # Direct replacement if not dealing with 'NOT'
+        mutated_sentence = sentence[:index] + new_operator + sentence[index + len(old_operator):]
 
     if verbose:
         print(f"Original sentence: {sentence}")
