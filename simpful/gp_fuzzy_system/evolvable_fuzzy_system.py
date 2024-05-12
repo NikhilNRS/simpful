@@ -43,35 +43,48 @@ class EvolvableFuzzySystem(FuzzySystem):
         """Adds a new fuzzy rule to the system."""
         super().add_rules([rule])
 
-    def mutate_feature(self):
-            """Mutates a feature within a rule by replacing it with another from the available features list."""
-            current_rules = self.get_rules()  # Fetch current rules using the formatted get_rules
-            if not current_rules:
+    def mutate_feature(self, verbose=False):
+        """
+        Mutates a feature within a rule by replacing it with another from the available features list.
+        Ensures that any new features introduced are supported by corresponding linguistic variables.
+
+        :param verbose: Boolean, if True, prints detailed information about the mutation process.
+        """
+        current_rules = self.get_rules()  # Fetch current rules using the formatted get_rules
+        if not current_rules:
+            if verbose:
                 print("No rules available to mutate.")
-                return  # Exit if there are no rules to mutate
-            
-            # Select a random rule to mutate
-            rule_index = random.randint(0, len(current_rules) - 1)
-            original_rule = current_rules[rule_index]
+            return  # Exit if there are no rules to mutate
+        
+        # Select a random rule to mutate
+        rule_index = random.randint(0, len(current_rules) - 1)
+        original_rule = current_rules[rule_index]
 
-            # Extract all words from the rule, assuming features are identifiable as whole words
-            words = re.findall(r'\w+', original_rule)
-            features_in_rule = [word for word in words if word in self.available_features]
+        # Extract all words from the rule, assuming features are identifiable as whole words
+        words = re.findall(r'\w+', original_rule)
+        features_in_rule = [word for word in words if word in self.available_features]
 
-            if not features_in_rule:
+        if not features_in_rule:
+            if verbose:
                 print("No features found in the rule to mutate.")
-                return  # Exit if the selected rule has no recognizable features
+            return  # Exit if the selected rule has no recognizable features
 
-            # Choose a feature to replace
-            feature_to_replace = random.choice(features_in_rule)
-            # Choose a new feature, ensuring it's different from the one to replace
-            new_feature = random.choice([feat for feat in self.available_features if feat != feature_to_replace])
+        # Choose a feature to replace
+        feature_to_replace = random.choice(features_in_rule)
+        # Choose a new feature, ensuring it's different from the one to replace
+        new_feature = random.choice([feat for feat in self.available_features if feat != feature_to_replace])
 
-            # Replace the feature in the rule
-            mutated_rule = original_rule.replace(feature_to_replace, new_feature)
+        # Replace the feature in the rule
+        mutated_rule = original_rule.replace(feature_to_replace, new_feature)
 
-            # Replace the mutated rule in the system
-            self.replace_rule(rule_index, mutated_rule, verbose=True)
+        # Replace the mutated rule in the system
+        self.replace_rule(rule_index, mutated_rule, verbose=verbose)
+
+        # Ensure all linguistic variables are still correctly defined after mutation
+        self.ensure_linguistic_variables(verbose=verbose)
+
+        if verbose:
+            print(f"Mutated rule: Changed '{feature_to_replace}' to '{new_feature}' in rule.")
 
     def mutate_operator(self):
         """Selects a random rule, mutates it, and replaces the original with the new one."""
@@ -107,6 +120,10 @@ class EvolvableFuzzySystem(FuzzySystem):
         # Swap the rules at the selected indices
         new_self._rules[index_self], new_partner._rules[index_partner] = \
             new_partner._rules[index_partner], new_self._rules[index_self]
+        
+        # After performing crossover, ensure all linguistic variables are in place with verbose output
+        self.ensure_linguistic_variables(verbose=True)
+        partner_system.ensure_linguistic_variables(verbose=True)
 
         return new_self, new_partner
 
@@ -171,6 +188,27 @@ class EvolvableFuzzySystem(FuzzySystem):
                 print(pred)
 
         return predictions
+    
+    def ensure_linguistic_variables(self, verbose=False):
+        """
+        Ensures that every feature used in the rules has a corresponding linguistic variable in the system.
+        If any are missing, they are dynamically added from a predefined set.
+
+        :param verbose: Boolean, if True, outputs detailed information about the additions.
+        """
+        rule_features = self.extract_features_from_rules()  # This method extracts features from the current rules
+        existing_variables = set(self._lvs.keys())
+
+        for feature in rule_features:
+            if feature not in existing_variables:
+                if feature in self.all_linguistic_variables:
+                    lv = self.all_linguistic_variables[feature]
+                    self.add_linguistic_variable(feature, lv)
+                    if verbose:
+                        print(f"Added missing linguistic variable for '{feature}'.")
+                else:
+                    if verbose:
+                        print(f"Warning: No predefined linguistic variable for '{feature}'.")
 
 
 if __name__ == "__main__":

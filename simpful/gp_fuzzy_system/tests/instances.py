@@ -122,27 +122,59 @@ linguistic_variables = {
     "inflation_rate_value": inflation_rate_lv
 }
 
+all_lvs = [
+    "gdp_growth_annual_prcnt",
+    "unemployment_rate_value",
+    "trade_balance_value",
+    "foreign_direct_investment_value",
+    "spy_close",
+    "volume",
+    "gld_close",
+    "macd",
+    "rsi",
+    "inflation_rate_value"
+]
 
 # Function to add relevant linguistic variables to an EvolvableFuzzySystem based on its rules
-def add_relevant_linguistic_variables(system, rule_variable_names):
+# def add_relevant_linguistic_variables(system, rule_variable_names):
+#     for var_name in rule_variable_names:
+#         if var_name in linguistic_variables:
+#             system.add_linguistic_variable(var_name, linguistic_variables[var_name])
+
+# # Add relevant linguistic variables to Market Risk Assessment system
+# add_relevant_linguistic_variables(market_risk, ["spy_close", "volume", "gld_close", "macd"])
+
+# # Add relevant linguistic variables to Investment Opportunity Analysis system
+# add_relevant_linguistic_variables(investment_opportunity, ["gld_close", "foreign_direct_investment_value", "spy_close", "volume"])
+
+# # Add relevant linguistic variables to Inflation Prediction system
+# add_relevant_linguistic_variables(inflation_prediction, ["inflation_rate_value", "gdp_growth_annual_prcnt", "unemployment_rate_value"])
+
+# # Add relevant linguistic variables to Market Sentiment Indicator system
+# add_relevant_linguistic_variables(market_sentiment, ["macd", "rsi", "volume", "spy_close"])
+
+# # Add relevant linguistic variables to Economic Health system
+# add_relevant_linguistic_variables(economic_health, ["gdp_growth_annual_prcnt", "unemployment_rate_value", "trade_balance_value", "foreign_direct_investment_value"])
+
+def add_all_linguistic_variables(system, rule_variable_names):
     for var_name in rule_variable_names:
         if var_name in linguistic_variables:
             system.add_linguistic_variable(var_name, linguistic_variables[var_name])
 
-# Add relevant linguistic variables to Market Risk Assessment system
-add_relevant_linguistic_variables(market_risk, ["spy_close", "volume", "gld_close", "macd"])
+# Add all linguistic variables to Market Risk Assessment system
+add_all_linguistic_variables(market_risk, all_lvs)
 
-# Add relevant linguistic variables to Investment Opportunity Analysis system
-add_relevant_linguistic_variables(investment_opportunity, ["gld_close", "foreign_direct_investment_value", "spy_close", "volume"])
+# Add all linguistic variables to Investment Opportunity Analysis system
+add_all_linguistic_variables(investment_opportunity, all_lvs)
 
-# Add relevant linguistic variables to Inflation Prediction system
-add_relevant_linguistic_variables(inflation_prediction, ["inflation_rate_value", "gdp_growth_annual_prcnt", "unemployment_rate_value"])
+# Add all linguistic variables to Inflation Prediction system
+add_all_linguistic_variables(inflation_prediction, all_lvs)
 
-# Add relevant linguistic variables to Market Sentiment Indicator system
-add_relevant_linguistic_variables(market_sentiment, ["macd", "rsi", "volume", "spy_close"])
+# Add all linguistic variables to Market Sentiment Indicator system
+add_all_linguistic_variables(market_sentiment, all_lvs)
 
-# Add relevant linguistic variables to Economic Health system
-add_relevant_linguistic_variables(economic_health, ["gdp_growth_annual_prcnt", "unemployment_rate_value", "trade_balance_value", "foreign_direct_investment_value"])
+# Add all linguistic variables to Economic Health system
+add_all_linguistic_variables(economic_health, all_lvs)
 
 
 # Economic Health
@@ -194,7 +226,7 @@ inflation_prediction.set_output_function("PricePrediction", " + ".join([f"1*{nam
 market_sentiment_features = ["macd", "rsi", "volume", "spy_close"]
 market_sentiment.set_output_function("PricePrediction", " + ".join([f"1*{name}" for name in market_sentiment_features]))
 
-def make_predictions_with_models(instances, features_dict, file_path, print_predictions=False):
+def make_predictions_with_models(instances, features_dict, file_path, print_predictions=True):
     all_predictions = {}
     # Subset and predict for each system
     for system_name, system in instances.items():
