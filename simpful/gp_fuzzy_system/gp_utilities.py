@@ -20,22 +20,33 @@ def roulette_wheel_selection(population, fitness_scores):
 
 def find_logical_operators(sentence):
     pattern = r'\b(AND|OR|NOT)\b'
-    matches = re.finditer(pattern, sentence, re.IGNORECASE)
-    results = [{'operator': match.group(), 'index': match.start()} for match in matches]
-    return results, len(results)
+    start = 0  # Initialize start index for search
+    operator_details = {}
+
+    while start < len(sentence):
+        match = re.search(pattern, sentence[start:])
+        if not match:
+            break
+        operator = match.group()
+        if operator not in operator_details:
+            operator_details[operator] = {'count': 0, 'indices': []}
+        actual_index = start + match.start()
+        operator_details[operator]['indices'].append(actual_index)
+        operator_details[operator]['count'] += 1
+        start = actual_index + match.end() - match.start()  # Update start to move past this match
+
+    return operator_details
 
 def insert_not_operator(index, sentence, verbose):
-    # Find the correct place to insert 'NOT'
+    # This pattern should match the entire condition to be negated
     pattern = r'\b(\w+ IS \w+)\b'
-    # Start searching right after the current operator to find the next condition
-    search_start_index = index + len(sentence[index:].split()[0]) + 1
-    match = re.search(pattern, sentence[search_start_index:])
+    match = re.search(pattern, sentence[index:])
     if match:
-        condition_start = search_start_index + match.start()
+        condition_start = index + match.start()
         condition_end = condition_start + len(match.group())
-        # Ensure 'NOT' is not already there
+        # Check if 'NOT' is not already there
         if sentence[max(0, condition_start - 4):condition_start].strip() != "NOT":
-            mutated_sentence = sentence[:condition_start] + 'NOT (' + match.group() + ')' + sentence[condition_end:]
+            mutated_sentence = sentence[:condition_start] + 'NOT (' + sentence[condition_start:condition_end] + ')' + sentence[condition_end:]
             if verbose:
                 print(f"Inserting NOT at {condition_start}: {mutated_sentence}")
         else:
@@ -51,8 +62,14 @@ def insert_not_operator(index, sentence, verbose):
 
 def remove_not_operator(index, sentence, verbose):
     try:
+        # Ensure we are starting at the right index
+        if sentence[index:index+3] != "NOT":
+            if verbose:
+                print("The specified index does not start with 'NOT'. No removal performed.")
+            return sentence
         start_paren = sentence.rindex('(', 0, index)
         end_paren = sentence.index(')', index)
+        # Remove 'NOT ' (including the space) and the surrounding parentheses
         mutated_sentence = sentence[:start_paren] + sentence[start_paren + 1:index] + sentence[index + 4:end_paren] + sentence[end_paren + 1:]
         if verbose:
             print(f"Removed NOT: Adjusted from '{sentence[start_paren:end_paren+1]}' to '{mutated_sentence}'")
@@ -60,10 +77,20 @@ def remove_not_operator(index, sentence, verbose):
         mutated_sentence = sentence
         if verbose:
             print(f"Failed to remove NOT due to parsing error: {e}")
+
     return mutated_sentence
 
 
 def mutate_logical_operator(sentence, features, verbose=True, mutate_target=None):
+    # Retrieve operator details using the updated find_logical_operators
+    operator_details = find_logical_operators(sentence)
+    
+    # Check if any operators were found
+    if not operator_details:
+        if verbose:
+            print("No logical operators found to mutate.")
+        return sentence
+    
     # Dictionary to map transitions and associated functions
     transition_map = {
         ('AND', 'OR'): lambda idx, sent: sent[:idx] + 'OR' + sent[idx + len('AND'):],
@@ -73,27 +100,20 @@ def mutate_logical_operator(sentence, features, verbose=True, mutate_target=None
         ('NOT', 'NOT'): lambda idx, sent: remove_not_operator(idx, sent, verbose),
         # ('NOT', 'AND') and ('NOT', 'OR') are not allowed, handle them explicitly if needed
     }
-
-    operators, count = find_logical_operators(sentence)
-    if count == 0:
-        if verbose:
-            print("No logical operators found to mutate.")
-        return sentence
-
+    
+    # Handling mutation target
     if mutate_target:
-        chosen = mutate_target
-        new_operator = chosen.get('new_operator', chosen['operator']).upper()  # Default to the old operator if not specified
+        # Use the provided mutate_target which specifies the operator and index to mutate
+        old_operator = mutate_target['operator'].upper()
+        index = mutate_target['index']
+        new_operator = mutate_target.get('new_operator', old_operator)  # Default to the old operator if no new specified
     else:
-        chosen = random.choice(operators)
-        new_operator = None  # Determine dynamically if not given
-
-    old_operator = chosen['operator'].upper()
-    index = chosen['index']
-
-    # Decide on the new operator if not predefined
-    if not new_operator:
+        # If no target provided, randomly select one (this branch may need rethinking or removal for strict usage)
+        chosen = random.choice([(op, detail['indices'][0]) for op, detail in operator_details.items() for _ in range(detail['count'])])
+        old_operator = chosen[0]
+        index = chosen[1]
         new_operator = 'OR' if old_operator == 'AND' else 'AND' if old_operator == 'OR' else 'NOT'
-
+    
     # Use the transition map to determine the mutation function
     key = (old_operator, new_operator)
     if key in transition_map:
@@ -109,9 +129,6 @@ def mutate_logical_operator(sentence, features, verbose=True, mutate_target=None
         print(f"Mutated sentence: {mutated_sentence}")
 
     return mutated_sentence
-
-
-
 
 
 def mutate_a_rule_in_list(rules):
