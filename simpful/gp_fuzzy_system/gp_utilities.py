@@ -40,11 +40,17 @@ def find_logical_operators(sentence):
 def insert_not_operator(index, sentence, verbose):
     # This pattern should match the entire condition to be negated
     pattern = r'\b(\w+ IS \w+)\b'
+    # Check if 'NOT' is directly following the current position to decide if removal is needed
+    if sentence[index:index+3].strip() == "NOT":
+        if verbose:
+            print("NOT operator detected at the target, invoking removal instead.")
+        return remove_not_operator(index, sentence, verbose)
+
     match = re.search(pattern, sentence[index:])
     if match:
         condition_start = index + match.start()
         condition_end = condition_start + len(match.group())
-        # Check if 'NOT' is not already there
+        # Check if 'NOT' is not already there just before the condition
         if sentence[max(0, condition_start - 4):condition_start].strip() != "NOT":
             mutated_sentence = sentence[:condition_start] + 'NOT (' + sentence[condition_start:condition_end] + ')' + sentence[condition_end:]
             if verbose:

@@ -74,6 +74,24 @@ class TestLogicalOperatorMutation(unittest.TestCase):
         mutated = gp_utilities.mutate_logical_operator(sentence, features, verbose=True, mutate_target=mutate_target)
         self.assertIn("NOT", mutated, "NOT should be inserted.")
         self.assertEqual(expected, mutated, "Proper NOT insertion with parentheses.")
+    
+    def test_not_already_present_removal(self):
+        sentence = "IF (gdp_growth IS Low) AND (unemployment_rate IS High) OR (inflation_rate IS Low) AND (NOT (market_trend IS Positive))"
+        # Define the mutate_target where 'NOT' is already present and should be removed instead
+        mutate_target = {
+            'operator': 'AND',  # The operator before NOT
+            'index': sentence.find("NOT"),  # Index directly where NOT starts
+            'new_operator': 'NOT'  # Indicating an attempt to mutate to NOT which should trigger removal
+        }
+        # Expected outcome: 'NOT' should be removed, not added again
+        expected = "IF (gdp_growth IS Low) AND (unemployment_rate IS High) OR (inflation_rate IS Low) AND (market_trend IS Positive)"
+
+        # Call the mutation function
+        mutated = gp_utilities.mutate_logical_operator(sentence, features=[], verbose=True, mutate_target=mutate_target)
+
+        # Check if the NOT has been removed correctly
+        self.assertNotIn("NOT (market_trend IS Positive)", mutated, "NOT should be removed.")
+        self.assertEqual(mutated, expected, "The sentence should have 'NOT' correctly removed.")
 
 
     def test_not_removal(self):
