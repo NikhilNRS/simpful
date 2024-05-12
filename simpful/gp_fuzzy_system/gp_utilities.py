@@ -94,19 +94,24 @@ def adjust_not_operator(index, sentence, old_operator, new_operator, verbose):
             print("Error: adjust_not_operator called without NOT involved.")
         return sentence  # Return unchanged as a fallback
 
-def mutate_logical_operator(sentence, verbose=True):
+def mutate_logical_operator(sentence, verbose=True, mutate_target=None):
     operators, count = find_logical_operators(sentence)
     if count == 0:
         if verbose:
             print("No logical operators found to mutate.")
-        return sentence  # No operators to mutate
+        return sentence
 
-    chosen = random.choice(operators)
+    if mutate_target is not None:
+        # Directly use the provided target for mutation
+        chosen = mutate_target
+    else:
+        # Randomly choose an operator to mutate
+        chosen = random.choice(operators)
+
     old_operator = chosen['operator'].upper()
     index = chosen['index']
-    alternatives = {'AND', 'OR', 'NOT'}  # Includes NOT for completeness
+    alternatives = {'AND', 'OR', 'NOT'}
 
-    # Use the new function to choose the new operator
     new_operator = choose_new_operator(old_operator, alternatives.copy())
 
     if verbose:
