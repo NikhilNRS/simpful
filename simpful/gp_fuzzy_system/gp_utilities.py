@@ -37,26 +37,28 @@ def remove_not_parentheses(index, sentence, verbose):
     return mutated_sentence
 
 def insert_not_operator(index, sentence, verbose):
-    # Improved regex to accurately capture conditions related to features
-    pattern = r'(\b\w+\b\s+IS\s+\b\w+\b)'
-    match = re.search(pattern, sentence[index:])
+    # Enhanced regex to better capture logical conditions immediately following the operator.
+    pattern = r'\b(\w+)\s+IS\s+(\w+)\b'
+    search_area = sentence[index:]
+    match = re.search(pattern, search_area)
     if match:
         condition_start = index + match.start()
-        condition_end = condition_start + len(match.group(1))
-        # Improved check for existing 'NOT'
-        if 'NOT' not in sentence[max(0, condition_start - 10):condition_start].strip():
-            mutated_sentence = sentence[:condition_start] + 'NOT (' + match.group(1) + ')' + sentence[condition_end:]
+        condition_end = condition_start + len(match.group(0))
+        if sentence[condition_start-4:condition_start].strip() != 'NOT':
+            mutated_sentence = sentence[:condition_start] + 'NOT (' + match.group(0) + ')' + sentence[condition_end:]
             if verbose:
-                print(f"Inserting NOT: Condition '{match.group(1)}' found at {condition_start}-{condition_end}, mutated to: {mutated_sentence}")
+                print(f"Inserting NOT: Condition '{match.group(0)}' found at {condition_start}-{condition_end}, mutated to: {mutated_sentence}")
         else:
-            mutated_sentence = sentence
             if verbose:
                 print("NOT already present, no insertion made.")
+            mutated_sentence = sentence
     else:
-        mutated_sentence = sentence
         if verbose:
             print("No suitable condition found for NOT insertion.")
+        mutated_sentence = sentence
+
     return mutated_sentence
+
 
 def remove_not_operator(index, sentence, verbose):
     try:
