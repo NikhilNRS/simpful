@@ -86,8 +86,21 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         if verbose:
             print(f"Mutated rule: Changed '{feature_to_replace}' to '{new_feature}' in rule.")
+    
+    def extract_features_from_rule(self, rule):
+        """Extract unique features from a single fuzzy rule."""
+        if not rule:
+            print("No rule provided.")
+            return []
 
-    # Not Needs to be handed differently
+        features_set = set()
+        # Find all alphanumeric words in the rule; assume they include feature names
+        words = re.findall(r'\w+', rule)
+        features_in_rule = [word for word in words if word in self.available_features]
+        features_set.update(features_in_rule)
+
+        return list(features_set)
+    
     def mutate_operator(self):
         """Selects a random rule, mutates it, and replaces the original with the new one."""
         current_rules = self.get_rules()  # Fetch current rules using the formatted get_rules
@@ -99,9 +112,12 @@ class EvolvableFuzzySystem(FuzzySystem):
         rule_index = random.randint(0, len(current_rules) - 1)
         original_rule = current_rules[rule_index]
 
-        # Mutate this selected rule
-        mutated_rule = gp_utilities.mutate_logical_operator(original_rule)
-        
+        # Extract features from the selected rule
+        features = self.extract_features_from_rule(original_rule)
+
+        # Mutate this selected rule using the extracted features
+        mutated_rule = gp_utilities.mutate_logical_operator(original_rule, features)
+
         # Replace the mutated rule in the system
         self.replace_rule(rule_index, mutated_rule, verbose=True)
     
