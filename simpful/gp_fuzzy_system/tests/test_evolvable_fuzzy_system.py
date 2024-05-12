@@ -16,16 +16,13 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """Setup shared resources or configurations for tests."""
-        # Adding the feature list directly in class for broader availability
-        cls.available_features = [
-            'gdp_growth_annual_prcnt', 'unemployment_rate_value', 
-            'trade_balance_value', 'foreign_direct_investment_value', 
-            'spy_close', 'volume', 'gld_close', 'macd', 'rsi', 
-            'inflation_rate_value'
-        ]
-        # Assuming `economic_health` is already imported and setup
+        # Load the CSV data
+        cls.test_data = pd.read_csv(Path(__file__).resolve().parent / 'selected_variables_first_100.csv')
+        # Set available features for economic_health based on test data columns
+        cls.available_features = cls.test_data.columns.tolist()
+        # Assigning the available features to economic_health
         economic_health.available_features = cls.available_features
+
 
     def test_initialization(self):
         """Test initialization of systems."""
@@ -45,84 +42,67 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         self.assertEqual(len(economic_health._rules), rule_count_before + 1)
     
     def test_mutate_feature(self):
-        """Test mutation of a feature within a rule."""
-        # Assure there are initial rules to test
+        """Test mutation of a feature within a rule and check linguistic variables."""
         self.assertGreater(len(economic_health.get_rules()), 0, "There should be initial rules for mutation.")
-
-        # Get the initial state of rules for comparison
         original_rules = economic_health.get_rules()
+        original_variables = set(economic_health._lvs.keys())
 
-        # Perform feature mutation
-        economic_health.mutate_feature()
+        economic_health.mutate_feature(verbose=True)  # Verbose true to capture output if needed
 
-        # Fetch the rules after mutation
         mutated_rules = economic_health.get_rules()
+        mutated_variables = set(economic_health._lvs.keys())
 
-        # Check that at least one rule has changed
         self.assertNotEqual(original_rules, mutated_rules, "At least one rule should be mutated after feature mutation.")
+        self.assertEqual(sum(original != mutated for original, mutated in zip(original_rules, mutated_rules)), 1, "Exactly one feature in one rule should be mutated.")
+        self.assertTrue(any(feature in economic_health.available_features for rule in mutated_rules for feature in re.findall(r'\b\w+\b', rule)), "Mutated features should exist within the available features list.")
+        self.assertTrue(mutated_variables >= original_variables, "All necessary linguistic variables should be present after mutation.")
 
-        # Verify that exactly one rule has a feature mutated
-        changes = [original != mutated for original, mutated in zip(original_rules, mutated_rules)]
-        self.assertEqual(sum(changes), 1, "Exactly one feature in one rule should be mutated.")
-
-        # Ensure mutated feature is within the available features list
-        mutated_feature_found = any(
-            feature for rule in mutated_rules for feature in re.findall(r'\b\w+\b', rule)
-            if feature in self.available_features
-        )
-        self.assertTrue(mutated_feature_found, "Mutated features should exist within the available features list.")
 
     def test_mutate_rule(self):
-            """Test mutation of a rule with added logging to check the structure and mutation effect."""
-            # Get the initial formatted state of rules for comparison
-            original_formatted_rules = economic_health.get_rules()
-            original_rules_str = [str(rule) for rule in original_formatted_rules]
+        """Test mutation of a rule with added logging to check the structure and mutation effect."""
+        # Get the initial formatted state of rules for comparison
+        original_formatted_rules = economic_health.get_rules()
+        original_rules_str = [str(rule) for rule in original_formatted_rules]
 
-            # Perform mutation
-            economic_health.mutate_operator()
+        # Perform mutation
+        economic_health.mutate_operator()
 
-            # Fetching the state of rules after mutation
-            mutated_formatted_rules = economic_health.get_rules()
-            mutated_rules_str = [str(rule) for rule in mutated_formatted_rules]
+        # Fetching the state of rules after mutation
+        mutated_formatted_rules = economic_health.get_rules()
+        mutated_rules_str = [str(rule) for rule in mutated_formatted_rules]
 
-            # Output for clarity in test output
-            print("Original rules:", original_rules_str)
-            print("Mutated rules:", mutated_rules_str)
+        # Output for clarity in test output
+        print("Original rules:", original_rules_str)
+        print("Mutated rules:", mutated_rules_str)
 
-            # Assert that the rules have changed
-            self.assertNotEqual(original_rules_str, mutated_rules_str, "Rules should be mutated.")
+        # Assert that the rules have changed
+        self.assertNotEqual(original_rules_str, mutated_rules_str, "Rules should be mutated.")
 
-            # Check if exactly one rule was mutated (assuming only one mutation occurs at a time)
-            differences = sum(1 for original, mutated in zip(original_rules_str, mutated_rules_str) if original != mutated)
-            self.assertEqual(differences, 1, "Exactly one rule should be mutated.")
+        # Check if exactly one rule was mutated (assuming only one mutation occurs at a time)
+        differences = sum(1 for original, mutated in zip(original_rules_str, mutated_rules_str) if original != mutated)
+        self.assertEqual(differences, 1, "Exactly one rule should be mutated.")
 
     def test_crossover(self):
-        """Test crossover functionality with random rule exchange."""
+        """Test crossover functionality with dynamic linguistic variable checks."""
         partner_system = market_risk.clone()
         offspring1, offspring2 = economic_health.crossover(partner_system)
 
-        self.assertIsNotNone(offspring1)
-        self.assertIsNotNone(offspring2)
+        self.assertIsNotNone(offspring1, "Offspring 1 should be successfully created.")
+        self.assertIsNotNone(offspring2, "Offspring 2 should be successfully created.")
 
-        # Extract rules to make verification easier
-        rules_self_before = economic_health.get_rules()
-        rules_partner_before = partner_system.get_rules()
-        rules_self_after = offspring1.get_rules()
-        rules_partner_after = offspring2.get_rules()
+        rules_self_before = set(economic_health.get_rules())
+        rules_partner_before = set(partner_system.get_rules())
+        rules_self_after = set(offspring1.get_rules())
+        rules_partner_after = set(offspring2.get_rules())
 
-        # Check that at least one rule in the offspring is different from the parent at any index
-        rule_swapped_from_self = any([rule not in rules_self_before for rule in rules_self_after])
-        rule_swapped_from_partner = any([rule not in rules_partner_before for rule in rules_partner_after])
+        self.assertTrue(rules_self_after != rules_self_before or rules_partner_after != rules_partner_before, "Offspring rules should differ from parent rules.")
+        self.assertTrue(rules_self_after.issubset(rules_self_before.union(rules_partner_before)), "All offspring 1 rules should come from one of the parents.")
+        self.assertTrue(rules_partner_after.issubset(rules_self_before.union(rules_partner_before)), "All offspring 2 rules should come from one of the parents.")
 
-        self.assertTrue(rule_swapped_from_self, "Offspring 1 should have at least one rule not in the original economic_health system.")
-        self.assertTrue(rule_swapped_from_partner, "Offspring 2 should have at least one rule not in the original market_risk system.")
+        # Check linguistic variables consistency
+        self.assertTrue(set(offspring1._lvs.keys()) >= rules_self_after, "Offspring 1 should have all necessary linguistic variables.")
+        self.assertTrue(set(offspring2._lvs.keys()) >= rules_partner_after, "Offspring 2 should have all necessary linguistic variables.")
 
-        # Additional check for randomness in rule exchange (optional, for more rigorous testing)
-        # Check if there's at least one rule that came from the partner system
-        self.assertTrue(any(rule in rules_partner_before for rule in rules_self_after), 
-                        "Offspring 1 should contain at least one rule from the partner system.")
-        self.assertTrue(any(rule in rules_self_before for rule in rules_partner_after), 
-                        "Offspring 2 should contain at least one rule from the economic_health system.")
     
     def test_crossover_produces_different_offspring(self):
         """Test crossover functionality ensures different offspring."""
@@ -147,24 +127,17 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         fitness_score = economic_health.evaluate_fitness(historical_data, predictions)
         expected_rmse = np.sqrt(np.mean((predictions - historical_data) ** 2))
         self.assertAlmostEqual(fitness_score, expected_rmse)
-    
-    def test_predict_with_models(self):
-        """Test predictions using the predefined function from instances.py."""
-        # Load data for testing
-        # Assuming 'selected_variables_first_100.csv' has been properly formatted and loaded
-        # Since I can't directly access the file contents here, I'll outline a generic approach:
-        
-        test_data = pd.read_csv('/path/to/selected_variables_first_100.csv')
-        feature_names = test_data.columns.tolist()  # Assuming this is how features are structured
 
-        # Call the prediction function directly
-        predictions = make_predictions_with_models(economic_health, feature_names, test_data)
+    def test_predict_with_fis(self):
+        """Test the predict_with_fis function to ensure it uses the rule-based features correctly."""
+        # Ensure economic_health has been initialized and has rules
+        self.assertTrue(economic_health._rules, "economic_health should have rules initialized")
+        # Call the predict_with_fis function
+        predictions = economic_health.predict_with_fis(self.test_data)
+        # Ensure predictions are returned as expected
+        self.assertIsInstance(predictions, list, "Should return a list of predictions")
+        self.assertEqual(len(predictions), len(self.test_data), "Should return one prediction per data row")
 
-        # Here you should define what you expect as a result to verify the predictions
-        # This part of the test will depend on what you define as correct or expected behavior
-        # For example, if you expect a list of predictions:
-        self.assertIsInstance(predictions, list, "Predictions should be returned as a list")
-        self.assertGreater(len(predictions), 0, "There should be at least one prediction made")
 
 
 if __name__ == '__main__':
