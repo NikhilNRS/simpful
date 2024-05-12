@@ -66,14 +66,14 @@ class TestLogicalOperatorMutation(unittest.TestCase):
         mutated = gp_utilities.mutate_logical_operator(sentence, features, verbose=True)
         self.assertEqual(sentence, mutated, "Sentence should remain unchanged when no logical operators are present.")
 
-    # def test_not_insertion(self):
-    #     sentence = "IF (gdp_growth IS Low) OR (unemployment_rate IS High) THEN (Outcome IS Negative)"
-    #     expected = "IF (gdp_growth IS Low) OR (NOT (unemployment_rate IS High)) THEN (Outcome IS Negative)"
-    #     # Clearly specify where and what to insert
-    #     mutate_target = {'operator': 'OR', 'index': sentence.find('OR') + len('OR') + 1, 'new_operator': 'NOT'}
-    #     mutated = gp_utilities.mutate_logical_operator(sentence, features, verbose=True, mutate_target=mutate_target)
-    #     self.assertIn("NOT", mutated, "NOT should be inserted.")
-    #     self.assertEqual(expected, mutated, "Proper NOT insertion with parentheses.")
+    def test_not_insertion(self):
+        sentence = "IF (gdp_growth IS Low) OR (unemployment_rate IS High) THEN (Outcome IS Negative)"
+        expected = "IF (gdp_growth IS Low) OR (NOT (unemployment_rate IS High)) THEN (Outcome IS Negative)"
+        # Clearly specify where and what to insert
+        mutate_target = {'operator': 'OR', 'index': sentence.find('OR') + len('OR') + 1, 'new_operator': 'NOT'}
+        mutated = gp_utilities.mutate_logical_operator(sentence, features, verbose=True, mutate_target=mutate_target)
+        self.assertIn("NOT", mutated, "NOT should be inserted.")
+        self.assertEqual(expected, mutated, "Proper NOT insertion with parentheses.")
 
 
     def test_not_removal(self):
