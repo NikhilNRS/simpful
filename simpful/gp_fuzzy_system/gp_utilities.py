@@ -24,14 +24,14 @@ def find_logical_operators(sentence):
     results = [{'operator': match.group(), 'index': match.start()} for match in matches]
     return results, len(results)
 
-def choose_new_operator(old_operator, alternatives, context):
+def choose_new_operator(old_operator, alternatives):
     if old_operator == 'NOT':
-        # Removing NOT, ensure it's logical to do so
-        return random.choice(list(alternatives - {'NOT'}))
+        # Ensures that if the old operator is NOT, it remains NOT
+        return 'NOT'
     else:
-        # If 'NOT' is in context, ensure its addition is logical
-        if 'NOT' not in context:
-            alternatives.add('NOT')
+        # Ensure NOT is not chosen unless old_operator is NOT
+        alternatives.discard('NOT')
+        alternatives.discard(old_operator)
         return random.choice(list(alternatives))
 
 def remove_not_parentheses(index, sentence, verbose):
@@ -94,7 +94,6 @@ def adjust_not_operator(index, sentence, old_operator, new_operator, verbose):
             print("Error: adjust_not_operator called without NOT involved.")
         return sentence  # Return unchanged as a fallback
 
-
 def mutate_logical_operator(sentence, verbose=True):
     operators, count = find_logical_operators(sentence)
     if count == 0:
@@ -103,27 +102,21 @@ def mutate_logical_operator(sentence, verbose=True):
         return sentence  # No operators to mutate
 
     chosen = random.choice(operators)
-    old_operator = chosen['operator'].upper()  # Normalize to upper case
+    old_operator = chosen['operator'].upper()
     index = chosen['index']
-    alternatives = {'AND', 'OR'}
+    alternatives = {'AND', 'OR', 'NOT'}  # Includes NOT for completeness
 
-    if old_operator == 'NOT':
-        # Since 'NOT' is special, handle its removal or maintain as is
-        new_operator = 'NOT'  # Simulate removal or modification scenario
-    else:
-        alternatives.discard(old_operator)  # Remove the current operator from possible choices
-        if 'NOT' not in sentence[index - 4:index + 4]:  # Simple check around the operator position
-            alternatives.add('NOT')
-        new_operator = random.choice(list(alternatives))
+    # Use the new function to choose the new operator
+    new_operator = choose_new_operator(old_operator, alternatives.copy())
 
     if verbose:
-        print(f"Mutating operator: {old_operator} to {new_operator}")
+        print(f"Mutating operator: {old_operator} at index {index} to {new_operator}")
 
-    # Handle 'NOT' adjustments or standard operator replacement
+    # Delegate to adjust_not_operator if 'NOT' is involved in old or new operator
     if 'NOT' in {old_operator, new_operator}:
         mutated_sentence = adjust_not_operator(index, sentence, old_operator, new_operator, verbose)
     else:
-        # Direct replacement if not dealing with 'NOT'
+        # Handle standard operator replacement if not dealing with 'NOT'
         mutated_sentence = sentence[:index] + new_operator + sentence[index + len(old_operator):]
 
     if verbose:
@@ -143,16 +136,16 @@ def mutate_a_rule_in_list(rules):
 
 
 
-# Example usage:
-rules_list = [
-    "IF (gdp_growth_annual_prcnt IS Low) AND (unemployment_rate_value IS High) THEN (PricePrediction IS PricePrediction)",
-    "IF (trade_balance_value IS Low) OR (foreign_direct_investment_value IS Low) THEN (PricePrediction IS PricePrediction)"
-]
+# # Example usage:
+# rules_list = [
+#     "IF (gdp_growth_annual_prcnt IS Low) AND (unemployment_rate_value IS High) THEN (PricePrediction IS PricePrediction)",
+#     "IF (trade_balance_value IS Low) OR (foreign_direct_investment_value IS Low) THEN (PricePrediction IS PricePrediction)"
+# ]
 
-# Call the function to mutate a rule
-mutated_rule = mutate_a_rule_in_list(rules_list)
-print("Original Rule:", rules_list[1])  # Choose the second rule as an example
-print("Mutated Rule:", mutated_rule)
+# # Call the function to mutate a rule
+# mutated_rule = mutate_a_rule_in_list(rules_list)
+# print("Original Rule:", rules_list[1])  # Choose the second rule as an example
+# print("Mutated Rule:", mutated_rule)
 
 """
 To-Do List for Future Development of gp_utilities.py:
