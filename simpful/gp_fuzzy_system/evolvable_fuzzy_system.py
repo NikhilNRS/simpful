@@ -104,7 +104,7 @@ class EvolvableFuzzySystem(FuzzySystem):
         
         # Replace the mutated rule in the system
         self.replace_rule(rule_index, mutated_rule, verbose=True)
-
+    
     def crossover(self, partner_system):
         """Performs crossover between this system and another, exchanging rules at potentially different indices."""
         if not self._rules or not partner_system._rules:
@@ -122,12 +122,16 @@ class EvolvableFuzzySystem(FuzzySystem):
         # Swap the rules at the selected indices
         new_self._rules[index_self], new_partner._rules[index_partner] = \
             new_partner._rules[index_partner], new_self._rules[index_self]
-        
-        # After performing crossover, ensure all linguistic variables are in place with verbose output
-        self.ensure_linguistic_variables(verbose=True)
-        partner_system.ensure_linguistic_variables(verbose=True)
 
         return new_self, new_partner
+    
+    def post_crossover_linguistic_verification(self, offspring1, offspring2):
+        """
+        Ensures that each offspring has all necessary linguistic variables after crossover.
+        Verifies and adds missing variables from their predefined set of all_linguistic_variables.
+        """
+        offspring1.ensure_linguistic_variables(verbose=True)
+        offspring2.ensure_linguistic_variables(verbose=True)
 
     def evaluate_fitness(self, historical_data, predictions):
         """Calculates the fitness score based on a comparison metric like RMSE."""
@@ -191,27 +195,22 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         return predictions
     
-    def ensure_linguistic_variables(self, verbose=False):
+    def ensure_linguistic_variables(self, verbose=True):
         """
-        Ensures that every feature used in the rules has a corresponding linguistic variable in the system.
-        If any are missing, they are dynamically added from a predefined set.
-
-        :param verbose: Boolean, if True, outputs detailed information about the additions.
+        Ensure each rule's linguistic variables are present in the fuzzy system. If any are missing, add them from the system's known set of all_linguistic_variables.
         """
-        rule_features = self.extract_features_from_rules()  # This method extracts features from the current rules
+        rule_features = self.extract_features_from_rules()
         existing_variables = set(self._lvs.keys())
 
-        for feature in rule_features:
-            if feature not in existing_variables:
-                if feature in self.all_linguistic_variables:
-                    lv = self.all_linguistic_variables[feature]
-                    self.add_linguistic_variable(feature, lv)
-                    if verbose:
-                        print(f"Added missing linguistic variable for '{feature}'.")
-                else:
-                    if verbose:
-                        print(f"Warning: No predefined linguistic variable for '{feature}'.")
-
+        missing_variables = [feat for feat in rule_features if feat not in existing_variables]
+        for feature in missing_variables:
+            if feature in self.all_linguistic_variables:
+                self.add_linguistic_variable(feature, self.all_linguistic_variables[feature])
+                if verbose:
+                    print(f"Added missing linguistic variable for '{feature}'.")
+            else:
+                if verbose:
+                    print(f"Warning: No predefined linguistic variable for '{feature}'.")
 
 if __name__ == "__main__":
     pass

@@ -26,47 +26,78 @@ def find_logical_operators(sentence):
     results = [{'operator': match.group(), 'index': match.start()} for match in matches]
     return results, len(results)
 
-def mutate_logical_operator(sentence):
+
+def find_logical_operators(sentence):
+    pattern = r'\b(AND|OR|NOT)\b'
+    matches = re.finditer(pattern, sentence, re.IGNORECASE)
+    results = [{'operator': match.group(), 'index': match.start()} for match in matches]
+    return results, len(results)
+
+def choose_new_operator(old_operator, sentence):
+    alternatives = {'AND', 'OR'}
+    if 'NOT' not in sentence:  # Allow adding NOT if it's not already in the rule
+        alternatives.add('NOT')
+    alternatives.discard(old_operator)
+    return random.choice(list(alternatives))
+
+def handle_not_operator(index, old_operator, new_operator, sentence, verbose):
+    # We need to insert NOT directly before a condition with parentheses
+    next_condition = re.search(r'\b\w+\b IS \b\w+\b', sentence[index + len(old_operator):])
+    if next_condition:
+        condition_start = next_condition.start()
+        new_operator = 'NOT ('
+        end_part = ')' + sentence[index + len(old_operator) + condition_start:]
+        mutated_sentence = sentence[:index + len(old_operator) + condition_start] + new_operator + end_part
+    else:
+        if verbose:
+            print("No valid condition found for NOT operator insertion.")
+        mutated_sentence = sentence  # If no valid next condition, return the sentence unchanged
+    return mutated_sentence
+
+def remove_not_parentheses(index, old_operator, new_operator, sentence, verbose):
+    try:
+        open_paren_index = sentence.rindex('(', 0, index)
+        close_paren_index = sentence.index(')', index)
+        mutated_sentence = (sentence[:open_paren_index] +
+                            sentence[open_paren_index+1:index] +
+                            new_operator +
+                            sentence[index+len(old_operator)+1:close_paren_index] +
+                            sentence[close_paren_index+1:])
+    except ValueError:
+        if verbose:
+            print("Error removing parentheses for NOT operator.")
+        mutated_sentence = sentence
+    return mutated_sentence
+
+def mutate_logical_operator(sentence, verbose=True):
     operators, count = find_logical_operators(sentence)
     if count == 0:
+        if verbose:
+            print("No logical operators found to mutate.")
         return sentence  # No operators to mutate
 
     chosen = random.choice(operators)
-    old_operator = chosen['operator'].upper()  # Normalize to upper case to handle case insensitivity
+    old_operator = chosen['operator'].upper()  # Normalize to upper case
     index = chosen['index']
-    alternatives = {'AND', 'OR', 'NOT'}
+    new_operator = choose_new_operator(old_operator, sentence)
 
-    # Remove the old operator from alternatives
-    alternatives.discard(old_operator)
-
-    # Choose a new operator from alternatives
-    new_operator = random.choice(list(alternatives))
+    if verbose:
+        print(f"Mutating operator: {old_operator} to {new_operator}")
 
     # Handling the insertion of NOT specifically to ensure correct syntax
     if new_operator == 'NOT':
-        # Insert NOT with correct parentheses if replacing another operator
-        if old_operator != 'NOT':
-            new_operator = 'NOT ('
-            end_part = ')' + sentence[index + len(old_operator):]
-        else:
-            end_part = sentence[index + len(old_operator):]
+        mutated_sentence = handle_not_operator(index, old_operator, new_operator, sentence, verbose)
+    elif old_operator == 'NOT':
+        mutated_sentence = remove_not_parentheses(index, old_operator, new_operator, sentence, verbose)
     else:
         end_part = sentence[index + len(old_operator):]
+        mutated_sentence = sentence[:index] + new_operator + end_part
 
-        # If replacing NOT with AND/OR, we need to remove extra parentheses if they exist
-        if old_operator == 'NOT':
-            # Removing the first open parenthesis after NOT
-            open_paren_index = sentence.index('(', index)
-            close_paren_index = sentence.rindex(')', index, len(sentence))
+    if verbose:
+        print(f"Original sentence: {sentence}")
+        print(f"Mutated sentence: {mutated_sentence}")
 
-            if open_paren_index < close_paren_index:
-                sentence = sentence[:open_paren_index] + sentence[open_paren_index+1:close_paren_index] + sentence[close_paren_index+1:]
-                end_part = sentence[index + len(old_operator) - 1:]  # Adjust the end part after removing parentheses
-
-    # Form the mutated sentence
-    mutated_sentence = sentence[:index] + new_operator + end_part
     return mutated_sentence
-
 
 def mutate_a_rule_in_list(rules):
     if not rules:

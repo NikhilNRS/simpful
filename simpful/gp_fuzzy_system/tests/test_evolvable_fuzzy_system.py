@@ -83,7 +83,7 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         self.assertEqual(differences, 1, "Exactly one rule should be mutated.")
 
     def test_crossover(self):
-        """Test crossover functionality with dynamic linguistic variable checks."""
+        """Test crossover functionality with rule swapping checks."""
         partner_system = market_risk.clone()
         offspring1, offspring2 = economic_health.crossover(partner_system)
 
@@ -99,26 +99,30 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         self.assertTrue(rules_self_after.issubset(rules_self_before.union(rules_partner_before)), "All offspring 1 rules should come from one of the parents.")
         self.assertTrue(rules_partner_after.issubset(rules_self_before.union(rules_partner_before)), "All offspring 2 rules should come from one of the parents.")
 
-        # Check linguistic variables consistency
-        self.assertTrue(set(offspring1._lvs.keys()) >= rules_self_after, "Offspring 1 should have all necessary linguistic variables.")
-        self.assertTrue(set(offspring2._lvs.keys()) >= rules_partner_after, "Offspring 2 should have all necessary linguistic variables.")
+        # After verifying rule swapping, check linguistic variable completeness
+        economic_health.post_crossover_linguistic_verification(offspring1, offspring2)
+        self.assertTrue(all(feature in offspring1._lvs for feature in offspring1.extract_features_from_rules()), "Offspring 1 should have all necessary linguistic variables.")
+        self.assertTrue(all(feature in offspring2._lvs for feature in offspring2.extract_features_from_rules()), "Offspring 2 should have all necessary linguistic variables.")
 
     
     def test_crossover_produces_different_offspring(self):
         """Test crossover functionality ensures different offspring."""
         partner_system = market_risk.clone()
         offspring1, offspring2 = economic_health.crossover(partner_system)
-        
+
         # Assert that both offspring are not None
         self.assertIsNotNone(offspring1, "First offspring should not be None")
         self.assertIsNotNone(offspring2, "Second offspring should not be None")
-        
+
         # Assert that offspring have parts of both parents' rules
         self.assertNotEqual(offspring1._rules, economic_health._rules, "Offspring 1 should have different rules from economic_health")
         self.assertNotEqual(offspring2._rules, market_risk._rules, "Offspring 2 should have different rules from market_risk")
-        
+
         # Check that the offspring are different from each other
         self.assertNotEqual(offspring1._rules, offspring2._rules, "The two offspring should have different rules")
+
+        # Additional checks for linguistic variables can be done if considered necessary
+
 
     def test_evaluate_fitness(self):
         """Test fitness evaluation based on RMSE."""
