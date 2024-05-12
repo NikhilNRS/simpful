@@ -24,41 +24,30 @@ def find_logical_operators(sentence):
     results = [{'operator': match.group(), 'index': match.start()} for match in matches]
     return results, len(results)
 
-def remove_not_parentheses(index, sentence, verbose):
-    try:
-        # Adjust to remove parentheses correctly around the condition `NOT` was negating
-        start_paren = sentence.rindex('(', 0, index)
-        end_paren = sentence.index(')', index + len('NOT'))
-        mutated_sentence = sentence[:start_paren] + sentence[start_paren + 1:index] + sentence[index + len('NOT') + 1:end_paren] + sentence[end_paren + 1:]
-    except ValueError:
-        if verbose:
-            print("Error removing parentheses for NOT operator.")
-        mutated_sentence = sentence  # Return unchanged if parentheses can't be adjusted
-    return mutated_sentence
-
 def insert_not_operator(index, sentence, verbose):
-    # Enhanced regex to better capture logical conditions immediately following the operator.
-    pattern = r'\b(\w+)\s+IS\s+(\w+)\b'
-    search_area = sentence[index:]
-    match = re.search(pattern, search_area)
+    # Find the correct place to insert 'NOT'
+    pattern = r'\b(\w+ IS \w+)\b'
+    # Start searching right after the current operator to find the next condition
+    search_start_index = index + len(sentence[index:].split()[0]) + 1
+    match = re.search(pattern, sentence[search_start_index:])
     if match:
-        condition_start = index + match.start()
-        condition_end = condition_start + len(match.group(0))
-        if sentence[condition_start-4:condition_start].strip() != 'NOT':
-            mutated_sentence = sentence[:condition_start] + 'NOT (' + match.group(0) + ')' + sentence[condition_end:]
+        condition_start = search_start_index + match.start()
+        condition_end = condition_start + len(match.group())
+        # Ensure 'NOT' is not already there
+        if sentence[max(0, condition_start - 4):condition_start].strip() != "NOT":
+            mutated_sentence = sentence[:condition_start] + 'NOT (' + match.group() + ')' + sentence[condition_end:]
             if verbose:
-                print(f"Inserting NOT: Condition '{match.group(0)}' found at {condition_start}-{condition_end}, mutated to: {mutated_sentence}")
+                print(f"Inserting NOT at {condition_start}: {mutated_sentence}")
         else:
+            mutated_sentence = sentence
             if verbose:
                 print("NOT already present, no insertion made.")
-            mutated_sentence = sentence
     else:
-        if verbose:
-            print("No suitable condition found for NOT insertion.")
         mutated_sentence = sentence
+        if verbose:
+            print("No suitable condition found for NOT insertion after the operator.")
 
     return mutated_sentence
-
 
 def remove_not_operator(index, sentence, verbose):
     try:
@@ -73,25 +62,6 @@ def remove_not_operator(index, sentence, verbose):
             print(f"Failed to remove NOT due to parsing error: {e}")
     return mutated_sentence
 
-def adjust_not_operator(index, sentence, old_operator, new_operator, verbose):
-    if old_operator == 'NOT' and new_operator == 'NOT':
-        # Negating a negation essentially removes NOT
-        if verbose:
-            print(f"Negating a negation at index {index}, effectively removing NOT.")
-        return remove_not_operator(index, sentence, verbose)
-    elif old_operator == 'NOT':
-        # Change from NOT to another operator (though this should be handled differently as NOT shouldn't convert directly to AND/OR)
-        if verbose:
-            print(f"Error: Incorrect use of adjust_not_operator to convert 'NOT' to '{new_operator}'.")
-        return sentence  # Return unchanged as fallback for incorrect usage
-    elif new_operator == 'NOT':
-        # Insert NOT
-        return insert_not_operator(index, sentence, verbose)
-    else:
-        # Standard operator replacement which should not happen via this function but handled in the main function
-        if verbose:
-            print("Error: adjust_not_operator called without NOT involved.")
-        return sentence  # Return unchanged as a fallback
 
 def mutate_logical_operator(sentence, features, verbose=True, mutate_target=None):
     operators, count = find_logical_operators(sentence)
@@ -100,34 +70,28 @@ def mutate_logical_operator(sentence, features, verbose=True, mutate_target=None
             print("No logical operators found to mutate.")
         return sentence
 
-    if mutate_target is not None:
+    if mutate_target:
         chosen = mutate_target
-        # Set old_operator from mutate_target directly
-        old_operator = chosen['operator'].upper()
-        index = chosen['index']
     else:
         chosen = random.choice(operators)
-        old_operator = chosen['operator'].upper()
-        index = chosen['index']
 
-    # Setup alternatives excluding NOT unless explicitly handled
-    alternatives = {'AND', 'OR'}
+    old_operator = chosen['operator'].upper()
+    index = chosen['index']
 
-    # If mutating NOT or handling specific mutation targets
+    # Set alternatives based on current operator
     if old_operator == 'NOT':
-        new_operator = 'NOT'  # We're handling NOT, so we assume removal or adjustment
+        new_operator = 'NOT'  # NOT must remain NOT (removal or adjustment)
         mutated_sentence = remove_not_operator(index, sentence, verbose)
+    elif old_operator == 'AND':
+        new_operator = 'OR'  # Directly toggle AND to OR or vice versa
+        mutated_sentence = sentence[:index] + 'OR' + sentence[index + len('AND'):]
+    elif old_operator == 'OR':
+        new_operator = 'AND'
+        mutated_sentence = sentence[:index] + 'AND' + sentence[index + len('OR'):]
     else:
-        # Discard the old operator to decide on a new one
-        alternatives.discard(old_operator)
-        if mutate_target is not None:
-            # Force a specific mutation if mutate_target is given
-            new_operator = next((op for op in alternatives if op != old_operator), old_operator)
-        else:
-            new_operator = random.choice(list(alternatives)) if alternatives else old_operator
-
-        # Mutate to the new operator directly
-        mutated_sentence = sentence[:index] + new_operator + sentence[index + len(old_operator):]
+        # This should never be reached since operators should be one of AND, OR, or NOT
+        new_operator = old_operator  # Fallback to do nothing
+        mutated_sentence = sentence
 
     if verbose:
         print(f"Mutating operator: {old_operator} at index {index} to {new_operator}")
@@ -135,6 +99,7 @@ def mutate_logical_operator(sentence, features, verbose=True, mutate_target=None
         print(f"Mutated sentence: {mutated_sentence}")
 
     return mutated_sentence
+
 
 
 def mutate_a_rule_in_list(rules):
@@ -191,3 +156,14 @@ To-Do List for Future Development of gp_utilities.py:
 
 This to-do list sets the direction for enhancing and expanding the capabilities of the genetic programming utilities in `gp_utilities.py`, ensuring they align with the intricate requirements of evolving data-driven fuzzy systems for complex design problems.
 """
+
+
+# OR, OR: system doesnt allow this
+# OR, NOT: we have to call insert_not_operator
+# OR, AND: just swap them
+# NOT, OR: System doesnt allow this, as NOT can only be replaced by NOT
+# NOT, NOT: negates itself, we call remove_not_operator
+# NOT, AND: System doesnt allow this, as NOT can only be replaced by NOT
+# AND, OR: just swap them
+# AND, NOT: we have to call insert_not_operator
+# AND, AND: System doent allow this

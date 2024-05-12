@@ -40,7 +40,7 @@ class TestLogicalOperatorMutation(unittest.TestCase):
     def test_and_to_or_mutation(self):
         sentence = "IF (spy_close IS High) AND (volume IS Low) THEN (Risk IS High)"
         expected = "IF (spy_close IS High) OR (volume IS Low) THEN (Risk IS High)"
-        mutate_target = {'operator': 'AND', 'index': sentence.find('AND')}
+        mutate_target = {'operator': 'AND', 'index': sentence.find('AND'), 'new_operator': 'OR'}
         # Ensure arguments are in correct order and properly named
         mutated = gp_utilities.mutate_logical_operator(sentence, features, verbose=True, mutate_target=mutate_target)
         self.assertNotIn("AND", mutated, "AND should be mutated to OR.")
@@ -50,7 +50,7 @@ class TestLogicalOperatorMutation(unittest.TestCase):
     def test_or_to_and_mutation(self):
         sentence = "IF (gld_close IS Low) OR (macd IS Negative) THEN (Investment IS Bad)"
         expected = "IF (gld_close IS Low) AND (macd IS Negative) THEN (Investment IS Bad)"
-        mutate_target = {'operator': 'OR', 'index': sentence.find('OR')}
+        mutate_target = {'operator': 'OR', 'index': sentence.find('OR'), 'new_operator': 'AND'}
         # Ensure arguments are in correct order and properly named
         mutated = gp_utilities.mutate_logical_operator(sentence, features, verbose=True, mutate_target=mutate_target)
         self.assertNotIn("OR", mutated, "OR should be mutated to AND.")
