@@ -11,6 +11,7 @@ class EvolvableFuzzySystem(FuzzySystem):
         self.fitness_score = 0
         self.mutation_rate = 1  # Adjustable mutation rate for evolution
         self.available_features = []  # Example features
+        self.all_linguistic_variables = {}
 
 
     def clone(self):
@@ -86,6 +87,7 @@ class EvolvableFuzzySystem(FuzzySystem):
         if verbose:
             print(f"Mutated rule: Changed '{feature_to_replace}' to '{new_feature}' in rule.")
 
+    # Not Needs to be handed differently
     def mutate_operator(self):
         """Selects a random rule, mutates it, and replaces the original with the new one."""
         current_rules = self.get_rules()  # Fetch current rules using the formatted get_rules

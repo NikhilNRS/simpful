@@ -20,6 +20,7 @@ def roulette_wheel_selection(population, fitness_scores):
 
 
 def find_logical_operators(sentence):
+    # This pattern looks for logical operators and considers the whole sentence structure.
     pattern = r'\b(AND|OR|NOT)\b'
     matches = re.finditer(pattern, sentence, re.IGNORECASE)
     results = [{'operator': match.group(), 'index': match.start()} for match in matches]
@@ -29,14 +30,43 @@ def mutate_logical_operator(sentence):
     operators, count = find_logical_operators(sentence)
     if count == 0:
         return sentence  # No operators to mutate
+
     chosen = random.choice(operators)
-    old_operator = chosen['operator']
+    old_operator = chosen['operator'].upper()  # Normalize to upper case to handle case insensitivity
     index = chosen['index']
     alternatives = {'AND', 'OR', 'NOT'}
+
+    # Remove the old operator from alternatives
     alternatives.discard(old_operator)
+
+    # Choose a new operator from alternatives
     new_operator = random.choice(list(alternatives))
-    mutated_sentence = sentence[:index] + new_operator + sentence[index + len(old_operator):]
+
+    # Handling the insertion of NOT specifically to ensure correct syntax
+    if new_operator == 'NOT':
+        # Insert NOT with correct parentheses if replacing another operator
+        if old_operator != 'NOT':
+            new_operator = 'NOT ('
+            end_part = ')' + sentence[index + len(old_operator):]
+        else:
+            end_part = sentence[index + len(old_operator):]
+    else:
+        end_part = sentence[index + len(old_operator):]
+
+        # If replacing NOT with AND/OR, we need to remove extra parentheses if they exist
+        if old_operator == 'NOT':
+            # Removing the first open parenthesis after NOT
+            open_paren_index = sentence.index('(', index)
+            close_paren_index = sentence.rindex(')', index, len(sentence))
+
+            if open_paren_index < close_paren_index:
+                sentence = sentence[:open_paren_index] + sentence[open_paren_index+1:close_paren_index] + sentence[close_paren_index+1:]
+                end_part = sentence[index + len(old_operator) - 1:]  # Adjust the end part after removing parentheses
+
+    # Form the mutated sentence
+    mutated_sentence = sentence[:index] + new_operator + end_part
     return mutated_sentence
+
 
 def mutate_a_rule_in_list(rules):
     if not rules:
