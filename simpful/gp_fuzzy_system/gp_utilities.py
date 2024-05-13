@@ -136,6 +136,48 @@ def mutate_logical_operator(sentence, verbose=True, mutate_target=None):
 
     return mutated_sentence
 
+def select_rule_indices(rules):
+    """Selects random indices for rule swapping."""
+    if not rules:
+        print("No rules available for selection.")
+        return None, None
+    index_self = random.randint(0, len(rules) - 1)
+    index_partner = random.randint(0, len(rules) - 1)
+    return index_self, index_partner
+
+def swap_rules(system1, system2, index1, index2):
+    """Swaps rules between two systems at specified indices."""
+    system1._rules[index1], system2._rules[index2] = system2._rules[index2], system1._rules[index1]
+
+def extract_missing_variables(system, verbose=True):
+    """Extracts missing variables from the system based on the rules, with optional verbose output."""
+    rule_features = system.extract_features_from_rules()
+    existing_variables = set(system._lvs.keys())
+    missing_variables = [var for var in rule_features if var not in existing_variables]
+    
+    if verbose:
+        print(f"Extracted features from rules: {rule_features}")
+        print(f"Existing variables in system: {existing_variables}")
+        print(f"Missing variables identified: {missing_variables}")
+    
+    return missing_variables
+
+def add_variables_to_system(system, missing_variables, all_linguistic_variables, verbose=True):
+    """Adds missing variables to the system from a predefined set of all_linguistic_variables."""
+    for var in missing_variables:
+        if var in all_linguistic_variables:
+            system.add_linguistic_variable(var, all_linguistic_variables[var])
+            if verbose:
+                print(f"Added missing linguistic variable for '{var}'.")
+        else:
+            if verbose:
+                print(f"Warning: No predefined linguistic variable for '{var}'.")
+
+def verify_and_add_variables(system, all_linguistic_variables, verbose=True):
+    """Ensures each rule's variables are present in the system using refactored functions."""
+    missing_variables = extract_missing_variables(system)
+    add_variables_to_system(system, missing_variables, all_linguistic_variables, verbose)
+
 
 def mutate_a_rule_in_list(rules):
     if not rules:

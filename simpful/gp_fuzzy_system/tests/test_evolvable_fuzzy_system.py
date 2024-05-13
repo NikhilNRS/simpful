@@ -35,6 +35,7 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         self.assertNotEqual(id(economic_health), id(clone))
         self.assertEqual(len(economic_health._rules), len(clone._rules))
 
+
     def test_add_rule(self):
         """Test adding a rule to the system."""
         rule_count_before = len(economic_health._rules)

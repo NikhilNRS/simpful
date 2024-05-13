@@ -2,6 +2,7 @@ from simpful import FuzzySystem
 import numpy as np
 from copy import deepcopy
 import gp_utilities
+from rule_processor import RuleProcessor 
 import random
 import re
 
@@ -13,32 +14,38 @@ class EvolvableFuzzySystem(FuzzySystem):
         self.available_features = []  # Example features
         self.all_linguistic_variables = {}
 
-
     def clone(self):
         """Creates a deep copy of the system, ensuring independent instances."""
         return deepcopy(self)
-
-    def get_rules(self):
-        """
-        Fetch and format the rules, removing unnecessary parentheses.
-        """
-        rules = super().get_rules()
-        return self.format_rules(rules)
-
+    
     @staticmethod
     def format_rules(rules):
         formatted_rules = []
-        pattern = r'^IF \(\((.*)\)\) THEN (.*)$'
+        # Update the pattern to capture conditions correctly and remove unnecessary parentheses in the consequence
+        pattern = r'^IF \(\((.*)\)\) THEN \((.*) IS (.*)\)$'
         for rule in rules:
             match = re.match(pattern, rule)
             if match:
-                condition = match.group(1)
-                consequence = match.group(2)
-                formatted_rule = f"IF ({condition}) THEN {consequence}"
+                condition = match.group(1)  # Captures the condition without double parentheses
+                consequence_variable = match.group(2)  # Captures the variable part of the consequence
+                consequence_value = match.group(3)  # Captures the value part of the consequence
+                formatted_rule = f"IF ({condition}) THEN ({consequence_variable} IS {consequence_value})"
                 formatted_rules.append(formatted_rule)
             else:
+                # In case some rules do not fit the pattern, handle them separately or log
                 formatted_rules.append(rule)
         return formatted_rules
+
+    def get_rules(self):
+        """
+        Fetch and format the rules using the RuleProcessor.
+        """
+        rules = super().get_rules()
+        return RuleProcessor.format_rules(rules)
+
+    def get_rules_(self):
+        # Implement fetching rules without calling the rule_processor's process_rules_from_system
+        return self._rules  # Assuming _rules holds the actual rules directly within the system
 
     def add_rule(self, rule):
         """Adds a new fuzzy rule to the system."""
@@ -117,27 +124,40 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         # Replace the mutated rule in the system
         self.replace_rule(rule_index, mutated_rule, verbose=True)
-    
-    def crossover(self, partner_system):
+
+    def crossover(self, partner_system, verbose=True):
         """Performs crossover between this system and another, exchanging rules at potentially different indices."""
         if not self._rules or not partner_system._rules:
-            print("No rules available to crossover.")
+            if verbose:
+                print("No rules available to crossover.")
             return None, None
 
-        # Randomly select a rule index from each system
-        index_self = random.randint(0, len(self._rules) - 1)
-        index_partner = random.randint(0, len(partner_system._rules) - 1)
+        # Select rule indices for crossover
+        index_self, index_partner = gp_utilities.select_rule_indices(self._rules + partner_system._rules)
+        if index_self is None or index_partner is None:
+            if verbose:
+                print("Failed to select rule indices.")
+            return None, None
 
-        # Use clone to ensure that we're working with independent copies
+        # Use the built-in clone method to create independent copies
         new_self = self.clone()
         new_partner = partner_system.clone()
 
-        # Swap the rules at the selected indices
-        new_self._rules[index_self], new_partner._rules[index_partner] = \
-            new_partner._rules[index_partner], new_self._rules[index_self]
+        if verbose:
+            print(f"Cloned systems for crossover. Swapping rules at indices {index_self} and {index_partner}.")
+
+        # Swap the rules using the utility function
+        gp_utilities.swap_rules(new_self, new_partner, index_self, index_partner)
+
+        # Post-crossover linguistic variable verification
+        gp_utilities.verify_and_add_variables(new_self, self.all_linguistic_variables, verbose)
+        gp_utilities.verify_and_add_variables(new_partner, partner_system.all_linguistic_variables, verbose)
+
+        if verbose:
+            print("Completed linguistic verification post-crossover.")
 
         return new_self, new_partner
-    
+
     def post_crossover_linguistic_verification(self, offspring1, offspring2):
         """
         Ensures that each offspring has all necessary linguistic variables after crossover.

@@ -1,15 +1,12 @@
 import unittest
 import sys
 from pathlib import Path
-import unittest
-import re
+from instances import *
+import gp_utilities
 
 # Add the parent directory to sys.path
 parent_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(parent_dir)
-
-import unittest
-import gp_utilities
 
 class TestLogicalOperatorMutation(unittest.TestCase):
     def test_find_no_operators(self):
@@ -120,6 +117,51 @@ class TestLogicalOperatorMutation(unittest.TestCase):
         self.assertNotIn("OR", mutated, "OR should be mutated to AND.")
         self.assertIn("AND", mutated, "Mutation should result in AND.")
         self.assertEqual(expected, mutated, "Proper mutation from OR to AND.")
+
+
+class TestSelectRuleIndices(unittest.TestCase):
+    def test_select_indices_with_actual_rules(self):
+        # Assuming both systems have rules set up as described
+        rules = economic_health._rules + market_risk._rules
+        index_self, index_partner = gp_utilities.select_rule_indices(rules)
+        self.assertIsNotNone(index_self, "Should select a valid index for self")
+        self.assertIsNotNone(index_partner, "Should select a valid index for partner")
+        self.assertTrue(0 <= index_self < len(rules), "Index for self should be within range")
+        self.assertTrue(0 <= index_partner < len(rules), "Index for partner should be within range")
+
+class TestSwapRules(unittest.TestCase):
+    def test_swap_rules_with_actual_systems(self):
+        system1 = economic_health.clone()
+        system2 = market_risk.clone()
+
+        # Store pre-swap rules for comparison
+        pre_swap_rule1 = system1._rules[0]
+        pre_swap_rule2 = system2._rules[0]
+
+        # Perform the swap
+        gp_utilities.swap_rules(system1, system2, 0, 0)
+
+        # Test the results
+        self.assertEqual(system1._rules[0], pre_swap_rule2, "Rule at index 0 of system1 should be swapped from system2")
+        self.assertEqual(system2._rules[0], pre_swap_rule1, "Rule at index 0 of system2 should be swapped from system1")
+
+class TestVerifyAndAddVariables(unittest.TestCase):
+    def test_verify_and_add_variables_with_actual_system(self):
+        # Use a system with missing variables in the set of rules
+        system = economic_health.clone()  # Clone to avoid modifications
+        system._rules = ["IF (non_existent_var IS Low) THEN (Outcome IS Negative)"]
+
+        # Assume non_existent_var is not in system._lvs but in all_linguistic_variables
+        all_linguistic_variables = {'non_existent_var': spy_close_lv}  # Use an actual linguistic variable for the test
+
+        # Run the verification
+        gp_utilities.verify_and_add_variables(system, all_linguistic_variables, verbose=True)
+
+        # Check if the variable was added
+        self.assertIn('non_existent_var', system._lvs, "non_existent_var should have been added to the system's linguistic variables")
+
+if __name__ == '__main__':
+    unittest.main()
 
 if __name__ == '__main__':
     unittest.main()

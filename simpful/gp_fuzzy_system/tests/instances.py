@@ -159,7 +159,7 @@ investment_opportunity.add_rule("IF (spy_close IS Low) AND (volume IS High) THEN
 
 # Inflation Prediction
 inflation_prediction.add_rule("IF (inflation_rate_value IS Medium) THEN (PricePrediction IS PricePrediction)")
-inflation_prediction.add_rule("IF (gdp_growth_annual_prcnt IS High) OR (unemployment_rate_value IS Low) THEN (PricePrediction IS PricePrediction)")
+inflation_prediction.add_rule("IF (gdp_growth_annual_prcnt IS High) OR (NOT(unemployment_rate_value IS Low)) THEN (PricePrediction IS PricePrediction)")
 
 # Market Sentiment Indicator
 market_sentiment.add_rule("IF (macd IS Positive) OR (rsi IS Oversold) THEN (PricePrediction IS PricePrediction)")
@@ -231,13 +231,14 @@ def make_predictions_with_models(instances, features_dict, file_path, print_pred
 
 
 if __name__ == "__main__":
-    # Handling command-line arguments for verbose output
-    verbose_level = None
+    verbose_level = 0  # Default to no verbosity
     if len(sys.argv) > 1:
-        if sys.argv[1] == "-v":
+        if "-v" in sys.argv:
             verbose_level = 1
-        elif sys.argv[1] == "-vv":
+        if "-vv" in sys.argv:
             verbose_level = 2
+        if "-vvv" in sys.argv:
+            verbose_level = 3
     
     # Initialize instances
     instances = {
@@ -266,3 +267,13 @@ if __name__ == "__main__":
             print(system_data.head())
 
         make_predictions_with_models(instances, features_dict, file_path)
+    
+    if verbose_level == 3:
+        for name, instance in instances.items():
+            print(f"Detailed Rules for {name}:")
+            detailed_rules = instance.get_rules()
+            if detailed_rules:
+                for rule in detailed_rules:
+                    print(f" - {rule}")
+            else:
+                print("No rules found or get_rules method not returning correctly.")  # Debug print
