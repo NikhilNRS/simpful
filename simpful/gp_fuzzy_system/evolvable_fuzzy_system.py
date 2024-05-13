@@ -17,24 +17,6 @@ class EvolvableFuzzySystem(FuzzySystem):
     def clone(self):
         """Creates a deep copy of the system, ensuring independent instances."""
         return deepcopy(self)
-    
-    @staticmethod
-    def format_rules(rules):
-        formatted_rules = []
-        # Update the pattern to capture conditions correctly and remove unnecessary parentheses in the consequence
-        pattern = r'^IF \(\((.*)\)\) THEN \((.*) IS (.*)\)$'
-        for rule in rules:
-            match = re.match(pattern, rule)
-            if match:
-                condition = match.group(1)  # Captures the condition without double parentheses
-                consequence_variable = match.group(2)  # Captures the variable part of the consequence
-                consequence_value = match.group(3)  # Captures the value part of the consequence
-                formatted_rule = f"IF ({condition}) THEN ({consequence_variable} IS {consequence_value})"
-                formatted_rules.append(formatted_rule)
-            else:
-                # In case some rules do not fit the pattern, handle them separately or log
-                formatted_rules.append(rule)
-        return formatted_rules
 
     def get_rules(self):
         """
