@@ -1,27 +1,52 @@
 import re
 
-class RuleProcessor:
-    @staticmethod
-    def format_rules(rules):
-        formatted_rules = []
-        pattern = r'^IF \(\((.*)\)\) THEN \((.*) IS (.*)\)$'
-        for rule in rules:
+def strip_parentheses(rule):
+    # Remove all parentheses while preserving the characters inside them
+    while '(' in rule or ')' in rule:
+        rule = re.sub(r'\(([^()]*)\)', r'\1', rule)
+    return rule
 
-            # Normalize the rule to ensure consistent spacing
-            rule = re.sub(r'\s+\(', ' (', rule)  # Remove extra spaces before '('
-            rule = re.sub(r'\)\s+', ') ', rule)  # Remove extra spaces after ')'
-            rule = re.sub(r'NOT\s*\(', 'NOT (', rule)  # Correctly format 'NOT' with the following '('
+def find_clauses(rule):
+    # Regex to find all occurrences of the pattern "word IS word"
+    clauses = re.findall(r'\b(\w+)\s+IS\s+(\w+)\b', rule)
+    return clauses
 
-            # Adjust the rule to remove any spaces directly before "NOT ("
-            rule = re.sub(r'\(\s*NOT', '(NOT', rule)
-            match = re.match(pattern, rule)
-            if match:
-                condition = match.group(1)
-                consequence_variable = match.group(2)
-                consequence_value = match.group(3)
-                formatted_rule = f"IF ({condition}) THEN ({consequence_variable} IS {consequence_value})"
-                formatted_rules.append(formatted_rule)
-            else:
-                formatted_rules.append(rule)  # Append original for review if no match
+def reintroduce_parentheses(rule, clauses):
+    for variable, value in clauses:
+        # Replace each occurrence of the pattern with the same pattern encapsulated in parentheses
+        pattern = f"{variable} IS {value}"
+        rule = rule.replace(pattern, f"({pattern})")
+    return rule
 
-        return formatted_rules
+def handle_not_conditions(rule):
+    # Ensure to capture "NOT" followed by a clause and wrap it correctly
+    rule = re.sub(r'\bNOT\s+(\(\w+\s+IS\s+\w+\))', r'(NOT \1)', rule)
+    return rule
+
+def finalize_not_conditions(rule):
+    # This function adjusts the spaces around 'NOT' conditions precisely.
+    # Remove spaces between '(' and 'NOT', and ensure one space between 'NOT' and the following '('
+    rule = re.sub(r'\s*\(\s*NOT\s+\(', '(NOT (', rule)
+
+    # Correct spacing issues around other parts of conditions, like after logical operators before '('
+    rule = re.sub(r'\b(AND|OR)\s*\(\s*', r'\1 (', rule)
+
+    # Ensure there's no extra space before ')' and after '(' globally
+    rule = re.sub(r'\(\s+', '(', rule)
+    rule = re.sub(r'\s+\)', ')', rule)
+
+    return rule
+
+
+def format_rule(rule):
+    print("Original:", rule)
+    rule = strip_parentheses(rule)
+    print("Stripped Parentheses:", rule)
+    clauses = find_clauses(rule)
+    rule = reintroduce_parentheses(rule, clauses)
+    print("Parentheses Reintroduced:", rule)
+    rule = handle_not_conditions(rule)
+    print("Handled NOT Conditions:", rule)
+    rule = finalize_not_conditions(rule)
+    print("Finalized NOT Conditions:", rule)
+    return rule

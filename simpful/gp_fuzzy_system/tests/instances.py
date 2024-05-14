@@ -2,7 +2,7 @@ import sys
 sys.path.append('..')
 from evolvable_fuzzy_system import EvolvableFuzzySystem
 import pandas as pd
-from simpful import FuzzySet, LinguisticVariable, FuzzySystem
+from simpful import *
 
 features_dict = {
     "economic_health": ["gdp_growth_annual_prcnt", "unemployment_rate_value", "trade_balance_value", "foreign_direct_investment_value"],
@@ -41,6 +41,7 @@ market_risk = EvolvableFuzzySystem()
 investment_opportunity = EvolvableFuzzySystem()
 inflation_prediction = EvolvableFuzzySystem()
 market_sentiment = EvolvableFuzzySystem()
+sepsis_system = EvolvableFuzzySystem()
 
 class EvolvableFuzzySystem(FuzzySystem):
     def __init__(self, *args, **kwargs):
@@ -108,6 +109,29 @@ inflation_rate_lv = LinguisticVariable([
     FuzzySet(points=[[4., 0.], [6., 1.]], term="High")
 ], concept="Inflation Rate")
 
+# Define fuzzy sets for the variable PaO2
+P1 = FuzzySet(function=Sigmoid_MF(c=40, a=0.1), term="low")
+P2 = FuzzySet(function=InvSigmoid_MF(c=40, a=0.1), term="high")
+LV1 = LinguisticVariable([P1,P2], concept="PaO2 level in blood", universe_of_discourse=[0,80])
+sepsis_system.add_linguistic_variable("PaO2", LV1)
+
+# Define fuzzy sets for the variable base excess
+B1 = FuzzySet(function=Gaussian_MF(mu=0,sigma=1.25), term="normal")
+LV2 = LinguisticVariable([B1], concept="Base excess of the blood", universe_of_discourse=[-10,10])
+sepsis_system.add_linguistic_variable("BaseExcess", LV2)
+
+# Define fuzzy sets for the variable trombocytes
+T1 = FuzzySet(function=Sigmoid_MF(c=50, a=0.75), term="low")
+T2 = FuzzySet(function=InvSigmoid_MF(c=50, a=0.75), term="high")
+LV3 = LinguisticVariable([T1,T2], concept="Trombocytes in blood", universe_of_discourse=[0,100])
+sepsis_system.add_linguistic_variable("Trombocytes", LV3)
+
+# Define fuzzy sets for the variable creatinine
+C1 = FuzzySet(function=Sigmoid_MF(c=300, a=0.2), term="low")
+C2 = FuzzySet(function=InvSigmoid_MF(c=300, a=0.1), term="high")
+LV4 = LinguisticVariable([C1,C2], concept="Creatinine in blood", universe_of_discourse=[0,600])
+sepsis_system.add_linguistic_variable("Creatinine", LV4)
+
 # Mapping of linguistic variables to the variable names
 linguistic_variables = {
     "gdp_growth_annual_prcnt": gdp_growth_lv,
@@ -165,6 +189,13 @@ inflation_prediction.add_rule("IF (gdp_growth_annual_prcnt IS High) OR (NOT(unem
 market_sentiment.add_rule("IF (macd IS Positive) OR (rsi IS Oversold) THEN (PricePrediction IS PricePrediction)")
 market_sentiment.add_rule("IF (volume IS High) AND (spy_close IS High) THEN (PricePrediction IS PricePrediction)")
 
+# Define the sepsis fuzzy rules
+RULE1 = "IF (PaO2 IS low) AND (Trombocytes IS high) AND (Creatinine IS high) AND (BaseExcess IS normal) THEN (Sepsis IS low_probability)"
+RULE2 = "IF (PaO2 IS high) AND (Trombocytes IS low) AND (Creatinine IS low) AND (NOT(BaseExcess IS normal)) THEN (Sepsis IS high_probability)"
+
+# Add fuzzy rules to the fuzzy reasoner object
+sepsis_system.add_rules([RULE1, RULE2])
+
 # Saving instances in a dictionary for easy access
 instances = {
     "economic_health": economic_health,
@@ -193,6 +224,11 @@ inflation_prediction.set_output_function("PricePrediction", " + ".join([f"1*{nam
 # Market Sentiment Indicator System
 market_sentiment_features = ["macd", "rsi", "volume", "spy_close"]
 market_sentiment.set_output_function("PricePrediction", " + ".join([f"1*{name}" for name in market_sentiment_features]))
+
+# Sepsis System
+# Define the consequents
+sepsis_system.set_crisp_output_value("low_probability", 1)
+sepsis_system.set_crisp_output_value("high_probability", 99)
 
 def make_predictions_with_models(instances, features_dict, file_path, print_predictions=False):
     all_predictions = {}
@@ -239,6 +275,8 @@ if __name__ == "__main__":
             verbose_level = 2
         if "-vvv" in sys.argv:
             verbose_level = 3
+        if "-vvvv" in sys.argv:
+            verbose_level = 4
     
     # Initialize instances
     instances = {
@@ -246,7 +284,8 @@ if __name__ == "__main__":
         "market_risk": market_risk,
         "investment_opportunity": investment_opportunity,
         "inflation_prediction": inflation_prediction,
-        "market_sentiment": market_sentiment
+        "market_sentiment": market_sentiment,
+        "sepsis_system": sepsis_system
     }
 
     # For '-v' argument: Print all instances and their rules
@@ -272,6 +311,16 @@ if __name__ == "__main__":
         for name, instance in instances.items():
             print(f"Detailed Rules for {name}:")
             detailed_rules = instance.get_rules()
+            if detailed_rules:
+                for rule in detailed_rules:
+                    print(f" - {rule}")
+            else:
+                print("No rules found or get_rules method not returning correctly.")  # Debug print
+
+    if verbose_level == 4:
+        for name, instance in instances.items():
+            print(f"Detailed Rules for {name}:")
+            detailed_rules = instance.get_rules_()
             if detailed_rules:
                 for rule in detailed_rules:
                     print(f" - {rule}")
