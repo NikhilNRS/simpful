@@ -2,7 +2,7 @@ from simpful import FuzzySystem
 import numpy as np
 from copy import deepcopy
 import gp_utilities
-from rule_processor import RuleProcessor 
+from rule_processor import format_rule 
 import random
 import re
 
@@ -20,13 +20,16 @@ class EvolvableFuzzySystem(FuzzySystem):
 
     def get_rules(self, format=False):
         """
-        Fetch and format the rules using the RuleProcessor.
+        Fetches rules and optionally formats them using the RuleProcessor.
         """
-        rules = super().get_rules()
+        rules = super().get_rules()  # This gets the unformatted list of rules.
         if format:
-            return RuleProcessor.format_rules(rules)
+            # Assumes format_rules is static and can be called with a list of rules.
+            formatted_rules = [format_rule(rule) for rule in rules]
+            return formatted_rules
         return rules
 
+        
     def get_rules_(self):
         # Implement fetching rules without calling the rule_processor's process_rules_from_system
         return self._rules  # Assuming _rules holds the actual rules directly within the system
