@@ -18,7 +18,7 @@ class EvolvableFuzzySystem(FuzzySystem):
         """Creates a deep copy of the system, ensuring independent instances."""
         return deepcopy(self)
 
-    def get_rules(self, format=False):
+    def get_rules(self, format=True):
         """
         Fetches rules and optionally formats them using the RuleProcessor.
         """
