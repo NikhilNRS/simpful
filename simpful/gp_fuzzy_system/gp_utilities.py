@@ -136,14 +136,18 @@ def mutate_logical_operator(sentence, verbose=True, mutate_target=None):
 
     return mutated_sentence
 
-def select_rule_indices(rules):
-    """Selects random indices for rule swapping."""
-    if not rules:
-        print("No rules available for selection.")
+def select_rule_indices(rules1, rules2):
+    """Selects random indices for rule swapping, ensuring indices are valid for both systems."""
+    if not rules1 or not rules2:
+        print("No rules available for selection in one or both systems.")
         return None, None
-    index_self = random.randint(0, len(rules) - 1)
-    index_partner = random.randint(0, len(rules) - 1)
+
+    # Ensure the indices are within the valid range for both systems
+    index_self = random.randint(0, len(rules1) - 1) if rules1 else None
+    index_partner = random.randint(0, len(rules2) - 1) if rules2 else None
+    
     return index_self, index_partner
+
 
 def swap_rules(system1, system2, index1, index2):
     """Swaps rules between two systems at specified indices."""

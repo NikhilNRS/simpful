@@ -115,7 +115,7 @@ class EvolvableFuzzySystem(FuzzySystem):
             return None, None
 
         # Select rule indices for crossover
-        index_self, index_partner = gp_utilities.select_rule_indices(self._rules + partner_system._rules)
+        index_self, index_partner = gp_utilities.select_rule_indices(self._rules, partner_system._rules)
         if index_self is None or index_partner is None:
             if verbose:
                 print("Failed to select rule indices.")

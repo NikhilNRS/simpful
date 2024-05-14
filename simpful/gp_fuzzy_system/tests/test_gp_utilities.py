@@ -121,13 +121,13 @@ class TestLogicalOperatorMutation(unittest.TestCase):
 
 class TestSelectRuleIndices(unittest.TestCase):
     def test_select_indices_with_actual_rules(self):
-        # Assuming both systems have rules set up as described
-        rules = economic_health._rules + market_risk._rules
-        index_self, index_partner = gp_utilities.select_rule_indices(rules)
+        # Correct usage with two separate rule lists
+        index_self, index_partner = gp_utilities.select_rule_indices(economic_health._rules, market_risk._rules)
         self.assertIsNotNone(index_self, "Should select a valid index for self")
         self.assertIsNotNone(index_partner, "Should select a valid index for partner")
-        self.assertTrue(0 <= index_self < len(rules), "Index for self should be within range")
-        self.assertTrue(0 <= index_partner < len(rules), "Index for partner should be within range")
+        self.assertTrue(0 <= index_self < len(economic_health._rules), "Index for self should be within range")
+        self.assertTrue(0 <= index_partner < len(market_risk._rules), "Index for partner should be within range")
+
 
 class TestSwapRules(unittest.TestCase):
     def test_swap_rules_with_actual_systems(self):
