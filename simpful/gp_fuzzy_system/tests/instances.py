@@ -1,6 +1,7 @@
 import sys
 sys.path.append('..')
 from evolvable_fuzzy_system import EvolvableFuzzySystem
+from linguistic_variable_store import LocalLinguisticVariableStore
 import pandas as pd
 from simpful import *
 
@@ -143,7 +144,11 @@ linguistic_variables = {
     "gld_close": gld_close_lv,
     "macd": macd_lv,
     "rsi": rsi_lv,
-    "inflation_rate_value": inflation_rate_lv
+    "inflation_rate_value": inflation_rate_lv,
+    "PaO2": LV1,
+    "BaseExcess": LV2,
+    "Trombocytes": LV3,
+    "Creatinine": LV4
 }
 
 
@@ -168,6 +173,12 @@ add_relevant_linguistic_variables(market_sentiment, ["macd", "rsi", "volume", "s
 # Add relevant linguistic variables to Economic Health system
 add_relevant_linguistic_variables(economic_health, ["gdp_growth_annual_prcnt", "unemployment_rate_value", "trade_balance_value", "foreign_direct_investment_value"])
 
+# Create an instance of the LocalLinguisticVariableStore
+variable_store = LocalLinguisticVariableStore()
+
+# Populate the store with the defined linguistic variables
+for name, variable in linguistic_variables.items():
+    variable_store.add_variable(name, variable)
 
 # Economic Health
 economic_health.add_rule("IF (gdp_growth_annual_prcnt IS Low) AND (unemployment_rate_value IS High) THEN (PricePrediction IS PricePrediction)")
@@ -279,6 +290,8 @@ if __name__ == "__main__":
             verbose_level = 4
         if "-vvvvv" in sys.argv:
             verbose_level = 5
+        if "-vvvvvv" in sys.argv:
+            verbose_level = 6
     
     # Initialize instances
     instances = {
@@ -343,3 +356,9 @@ if __name__ == "__main__":
 
         # Re-adding the 'PaO2' variable to check add functionality as well
         sepsis_system.add_linguistic_variable("PaO2", LV1, verbose=True)
+    
+    if verbose_level == 6:
+        # Print out all variables to confirm they're stored correctly
+        all_vars = variable_store.get_all_variables()
+        for name, var in all_vars.items():
+            print(f"{name}: {var}")

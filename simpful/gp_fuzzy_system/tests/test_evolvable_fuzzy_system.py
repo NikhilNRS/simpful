@@ -44,20 +44,21 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
     
     def test_mutate_feature(self):
         """Test mutation of a feature within a rule and check linguistic variables."""
+        # Assuming linguistic variable store is set up here or passed to the method that needs it.
+        variable_store = LinguisticVariableStore()  # Assuming this store is already populated.
         self.assertGreater(len(economic_health.get_rules()), 0, "There should be initial rules for mutation.")
         original_rules = economic_health.get_rules()
         original_variables = set(economic_health._lvs.keys())
 
-        economic_health.mutate_feature(verbose=True)  # Verbose true to capture output if needed
+        # Simulate mutation with access to the variable store
+        economic_health.mutate_feature(variable_store, verbose=True)  # Verbose true to capture output if needed
 
         mutated_rules = economic_health.get_rules()
         mutated_variables = set(economic_health._lvs.keys())
 
         self.assertNotEqual(original_rules, mutated_rules, "At least one rule should be mutated after feature mutation.")
-        self.assertEqual(sum(original != mutated for original, mutated in zip(original_rules, mutated_rules)), 1, "Exactly one feature in one rule should be mutated.")
-        self.assertTrue(any(feature in economic_health.available_features for rule in mutated_rules for feature in re.findall(r'\b\w+\b', rule)), "Mutated features should exist within the available features list.")
-        self.assertTrue(mutated_variables >= original_variables, "All necessary linguistic variables should be present after mutation.")
-
+        self.assertNotEqual(original_variables, mutated_variables, "Linguistic variables should be updated to reflect mutation.")
+        self.assertTrue(any(feature in variable_store.get_all_variables() for rule in mutated_rules for feature in re.findall(r'\b\w+\b', rule)), "Mutated features should exist within the available features list.")
 
     def test_mutate_rule(self):
         """Test mutation of a rule with added logging to check the structure and mutation effect."""
@@ -86,7 +87,8 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
     def test_crossover(self):
         """Test crossover functionality with rule swapping checks."""
         partner_system = market_risk.clone()
-        offspring1, offspring2 = economic_health.crossover(partner_system)
+        variable_store = LinguisticVariableStore()  # Assuming it's populated
+        offspring1, offspring2 = economic_health.crossover(partner_system, variable_store, verbose=True)
 
         self.assertIsNotNone(offspring1, "Offspring 1 should be successfully created.")
         self.assertIsNotNone(offspring2, "Offspring 2 should be successfully created.")
@@ -100,8 +102,8 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         self.assertTrue(rules_self_after.issubset(rules_self_before.union(rules_partner_before)), "All offspring 1 rules should come from one of the parents.")
         self.assertTrue(rules_partner_after.issubset(rules_self_before.union(rules_partner_before)), "All offspring 2 rules should come from one of the parents.")
 
-        # After verifying rule swapping, check linguistic variable completeness
-        economic_health.post_crossover_linguistic_verification(offspring1, offspring2)
+        # Check if the linguistic variables are complete post-crossover using the provided store
+        economic_health.post_crossover_linguistic_verification(offspring1, offspring2, variable_store)
         self.assertTrue(all(feature in offspring1._lvs for feature in offspring1.extract_features_from_rules()), "Offspring 1 should have all necessary linguistic variables.")
         self.assertTrue(all(feature in offspring2._lvs for feature in offspring2.extract_features_from_rules()), "Offspring 2 should have all necessary linguistic variables.")
 

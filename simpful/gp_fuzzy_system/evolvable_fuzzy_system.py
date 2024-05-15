@@ -12,7 +12,6 @@ class EvolvableFuzzySystem(FuzzySystem):
         self.fitness_score = 0
         self.mutation_rate = 1  # Adjustable mutation rate for evolution
         self.available_features = []  # Example features
-        self.all_linguistic_variables = {}
 
     def clone(self):
         """Creates a deep copy of the system, ensuring independent instances."""
@@ -111,14 +110,15 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         # Replace the mutated rule in the system
         self.replace_rule(rule_index, mutated_rule, verbose=True)
-
-    def crossover(self, partner_system, verbose=True):
-        """Performs crossover between this system and another, exchanging rules at potentially different indices."""
+    
+    def crossover(self, partner_system, variable_store, verbose=True):
+        # Similar setup, but now uses variable_store for linguistic variables
         if not self._rules or not partner_system._rules:
             if verbose:
                 print("No rules available to crossover.")
             return None, None
 
+        # Select indices and perform cloning as before
         index_self, index_partner = gp_utilities.select_rule_indices(self._rules, partner_system._rules)
         if index_self is None or index_partner is None:
             if verbose:
@@ -127,13 +127,13 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         new_self = self.clone()
         new_partner = partner_system.clone()
+
+
         gp_utilities.swap_rules(new_self, new_partner, index_self, index_partner)
 
-        if verbose:
-            print(f"Cloned systems for crossover. Swapping rules at indices {index_self} and {index_partner}.")
-
-        gp_utilities.verify_and_add_variables(new_self, self.all_linguistic_variables, verbose)
-        gp_utilities.verify_and_add_variables(new_partner, partner_system.all_linguistic_variables, verbose)
+        # Use variable_store for verification
+        gp_utilities.verify_and_add_variables(new_self, variable_store, verbose)
+        gp_utilities.verify_and_add_variables(new_partner, variable_store, verbose)
 
         if verbose:
             print("Completed linguistic verification post-crossover.")
@@ -142,22 +142,24 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         return new_self, new_partner
     
-    def ensure_linguistic_variables(self, verbose=True):
+    def ensure_linguistic_variables(self, variable_store, verbose=True):
         """
-        Ensure each rule's linguistic variables are present in the fuzzy system. If any are missing, add them from the system's known set of all_linguistic_variables.
+        Ensure each rule's linguistic variables are present in the fuzzy system. If any are missing,
+        add them from a variable store.
         """
         rule_features = self.extract_features_from_rules()
         existing_variables = set(self._lvs.keys())
 
         missing_variables = [feat for feat in rule_features if feat not in existing_variables]
         for feature in missing_variables:
-            if feature in self.all_linguistic_variables:
-                self.add_linguistic_variable(feature, self.all_linguistic_variables[feature])
+            if variable_store.has_variable(feature):
+                self.add_linguistic_variable(feature, variable_store.get_variable(feature))
                 if verbose:
                     print(f"Added missing linguistic variable for '{feature}'.")
             else:
                 if verbose:
-                    print(f"Warning: No predefined linguistic variable for '{feature}'.")
+                    print(f"Warning: No predefined linguistic variable for '{feature}' in the store.")
+
 
     def post_crossover_linguistic_verification(self, offspring1, offspring2):
         """
@@ -175,7 +177,7 @@ class EvolvableFuzzySystem(FuzzySystem):
 
     def extract_features_from_rules(self):
         """Extract unique features from the current fuzzy rules."""
-        current_rules = self.get_rules()  # Assuming get_rules fetches the current fuzzy rules
+        current_rules = self.get_rules()
         if not current_rules:
             print("No rules to analyze.")
             return []

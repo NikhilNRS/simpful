@@ -177,11 +177,22 @@ def add_variables_to_system(system, missing_variables, all_linguistic_variables,
             if verbose:
                 print(f"Warning: No predefined linguistic variable for '{var}'.")
 
-def verify_and_add_variables(system, all_linguistic_variables, verbose=True):
+def verify_and_add_variables(system, variable_store, verbose=True):
     """Ensures each rule's variables are present in the system using refactored functions."""
     missing_variables = extract_missing_variables(system)
-    add_variables_to_system(system, missing_variables, all_linguistic_variables, verbose)
+    add_variables_to_system(system, missing_variables, variable_store, verbose)
 
+def add_variables_to_system(system, missing_variables, variable_store, verbose=True):
+    """Adds missing variables to the system from the variable_store."""
+    for var in missing_variables:
+        lv = variable_store.get_variable(var)
+        if lv:
+            system.add_linguistic_variable(var, lv)
+            if verbose:
+                print(f"Added missing linguistic variable for '{var}'.")
+        else:
+            if verbose:
+                print(f"Warning: No predefined linguistic variable for '{var}'.")
 
 def mutate_a_rule_in_list(rules):
     if not rules:
