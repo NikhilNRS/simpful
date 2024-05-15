@@ -39,47 +39,41 @@ class EvolvableFuzzySystem(FuzzySystem):
 
     def mutate_feature(self, variable_store, verbose=False):
         """
-        Mutates a feature within a rule by replacing it with another from the available features list.
-        Ensures that any new features introduced are supported by corresponding linguistic variables.
-
-        :param verbose: Boolean, if True, prints detailed information about the mutation process.
+        Mutates a feature within a rule by replacing it with another from the available features list,
+        ensuring the terms are also compatible.
         """
-        current_rules = self.get_rules()  # Fetch current rules using the formatted get_rules
+        current_rules = self.get_rules()
         if not current_rules:
             if verbose:
                 print("No rules available to mutate.")
-            return  # Exit if there are no rules to mutate
+            return
         
-        # Select a random rule to mutate
         rule_index = random.randint(0, len(current_rules) - 1)
         original_rule = current_rules[rule_index]
+        # Example rule: "IF (feature IS term) THEN outcome"
 
-        # Extract all words from the rule, assuming features are identifiable as whole words
-        words = re.findall(r'\w+', original_rule)
-        features_in_rule = [word for word in words if word in self.available_features]
-
-        if not features_in_rule:
+        feature_term_pair = gp_utilities.extract_feature_term(original_rule, self.available_features)
+        if not feature_term_pair:
             if verbose:
-                print("No features found in the rule to mutate.")
-            return  # Exit if the selected rule has no recognizable features
+                print("No feature-term pairs found in the rule to mutate.")
+            return
 
-        # Choose a feature to replace
-        feature_to_replace = random.choice(features_in_rule)
-        # Choose a new feature, ensuring it's different from the one to replace
-        new_feature = random.choice([feat for feat in self.available_features if feat != feature_to_replace])
+        feature_to_replace, current_term = feature_term_pair
+        new_feature = random.choice([f for f in self.available_features if f != feature_to_replace])
 
-        # Replace the feature in the rule
-        mutated_rule = original_rule.replace(feature_to_replace, new_feature)
+        # Fetch a valid term for the new feature
+        new_term = gp_utilities.get_valid_term(new_feature, current_term, variable_store)
 
-        # Replace the mutated rule in the system
+        # Construct the mutated rule
+        mutated_rule = original_rule.replace(f"{feature_to_replace} IS {current_term}", f"{new_feature} IS {new_term}")
+
         self.replace_rule(rule_index, mutated_rule, verbose=verbose)
-
-        # Ensure all linguistic variables are still correctly defined after mutation
         self.ensure_linguistic_variables(variable_store, verbose=verbose)
 
         if verbose:
-            print(f"Mutated rule: Changed '{feature_to_replace}' to '{new_feature}' in rule.")
-    
+            print(f"Mutated rule: Changed '{feature_to_replace} IS {current_term}' to '{new_feature} IS {new_term}' in rule.")
+
+        
     def extract_features_from_rule(self, rule):
         """Extract unique features from a single fuzzy rule."""
         if not rule:

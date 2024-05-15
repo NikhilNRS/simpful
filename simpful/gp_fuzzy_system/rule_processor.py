@@ -37,6 +37,40 @@ def finalize_not_conditions(rule):
 
     return rule
 
+def extract_feature_term(rule, available_features):
+    """
+    Extracts all feature-term pairs from a rule based on available features.
+    
+    Args:
+    - rule (str): The fuzzy rule string.
+    - available_features (list): A list of features available in the system.
+
+    Returns:
+    - list of tuples: A list of tuples containing the feature and term (feature, term) for each recognized pair.
+    """
+    # This pattern assumes the rule is cleanly formatted and targets only the part before 'THEN'
+    pattern = r"\b({})\b IS (\w+)".format("|".join(re.escape(feature) for feature in available_features))
+    matches = re.findall(pattern, rule)
+    return matches if matches else []
+
+def encapsulate_then_clause(rule):
+    """
+    Ensures the clause after 'THEN' is encapsulated in parentheses if not already.
+    """
+    # Split the rule at 'THEN'
+    if 'THEN' in rule:
+        parts = rule.split('THEN')
+        before_then = parts[0].strip()
+        after_then = parts[1].strip()
+
+        # Check if after_then is already encapsulated in parentheses
+        if not (after_then.startswith('(') and after_then.endswith(')')):
+            after_then = f'({after_then})'
+
+        # Reassemble the rule
+        rule = f'{before_then} THEN {after_then}'
+
+    return rule
 
 def format_rule(rule):
     print("Original:", rule)
@@ -49,4 +83,6 @@ def format_rule(rule):
     print("Handled NOT Conditions:", rule)
     rule = finalize_not_conditions(rule)
     print("Finalized NOT Conditions:", rule)
+    rule = encapsulate_then_clause(rule)
+    print("Encapsulated THEN Clause:", rule)
     return rule

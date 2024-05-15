@@ -203,7 +203,15 @@ def mutate_a_rule_in_list(rules):
     mutated_rule = mutate_logical_operator(random_rule)
     return mutated_rule
 
-
+def get_valid_term(new_feature, current_term, variable_store):
+    """
+    Returns a valid term for the new feature, checking if the current term is compatible or selecting a new one.
+    """
+    lv = variable_store.get_variable(new_feature)
+    if current_term in lv.get_terms():
+        return current_term
+    else:
+        return random.choice(lv.get_terms())
 
 # # Example usage:
 # rules_list = [
