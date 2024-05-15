@@ -205,13 +205,25 @@ def mutate_a_rule_in_list(rules):
 
 def get_valid_term(new_feature, current_term, variable_store):
     """
-    Returns a valid term for the new feature, checking if the current term is compatible or selecting a new one.
+    Returns a valid term for the new feature by checking if the current term is compatible 
+    or selecting a new one from the available terms for that feature.
+
+    Args:
+    - new_feature (str): The feature for which a term is needed.
+    - current_term (str): The current term being used, which will be checked for compatibility.
+    - variable_store: The store that contains variables and their terms.
+
+    Returns:
+    - str: A valid term for the new feature.
     """
     lv = variable_store.get_variable(new_feature)
-    if current_term in lv.get_terms():
+    terms = lv.get_terms()  # Use the new get_terms method
+
+    if current_term in terms:
         return current_term
     else:
-        return random.choice(lv.get_terms())
+        return random.choice(terms)
+
 
 # # Example usage:
 # rules_list = [

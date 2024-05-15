@@ -51,6 +51,12 @@ class LinguisticVariable(object):
         self._universe_of_discourse = universe_of_discourse
         self._FSlist = FS_list
         self._concept = concept
+    
+    def get_terms(self):
+        """
+        Returns a list of all terms (labels) for the fuzzy sets in this linguistic variable.
+        """
+        return [fs._term for fs in self._FSlist]
 
 
     def get_values(self, v):

@@ -2,7 +2,7 @@ from simpful import FuzzySystem
 import numpy as np
 from copy import deepcopy
 import gp_utilities
-from rule_processor import format_rule 
+from rule_processor import format_rule, extract_feature_term
 import random
 import re
 
@@ -40,38 +40,47 @@ class EvolvableFuzzySystem(FuzzySystem):
     def mutate_feature(self, variable_store, verbose=False):
         """
         Mutates a feature within a rule by replacing it with another from the available features list,
-        ensuring the terms are also compatible.
+        ensuring the terms are also compatible. Only one random feature-term pair is mutated.
         """
         current_rules = self.get_rules()
         if not current_rules:
             if verbose:
                 print("No rules available to mutate.")
             return
-        
+
         rule_index = random.randint(0, len(current_rules) - 1)
         original_rule = current_rules[rule_index]
-        # Example rule: "IF (feature IS term) THEN outcome"
 
-        feature_term_pair = gp_utilities.extract_feature_term(original_rule, self.available_features)
-        if not feature_term_pair:
+        feature_term_pairs = extract_feature_term(original_rule, self.available_features)
+        if not feature_term_pairs:
             if verbose:
                 print("No feature-term pairs found in the rule to mutate.")
             return
 
-        feature_to_replace, current_term = feature_term_pair
+        # Choose a random feature-term pair to mutate
+        feature_to_replace, current_term = random.choice(feature_term_pairs)
+
+        # Select a new feature that is not the one being replaced
         new_feature = random.choice([f for f in self.available_features if f != feature_to_replace])
 
-        # Fetch a valid term for the new feature
+        # Fetch a valid term for the new feature from the variable store
         new_term = gp_utilities.get_valid_term(new_feature, current_term, variable_store)
+        if new_term is None:
+            if verbose:
+                print(f"No valid term found for the new feature '{new_feature}'.")
+            return
 
-        # Construct the mutated rule
+        # Construct the mutated rule replacing the selected feature-term pair
         mutated_rule = original_rule.replace(f"{feature_to_replace} IS {current_term}", f"{new_feature} IS {new_term}")
 
+        # Replace the rule in the system and ensure all linguistic variables are correct
         self.replace_rule(rule_index, mutated_rule, verbose=verbose)
         self.ensure_linguistic_variables(variable_store, verbose=verbose)
 
         if verbose:
             print(f"Mutated rule: Changed '{feature_to_replace} IS {current_term}' to '{new_feature} IS {new_term}' in rule.")
+
+
 
         
     def extract_features_from_rule(self, rule):
