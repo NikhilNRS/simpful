@@ -270,7 +270,7 @@ class FuzzySystem(object):
             verbose: True/False, toggles verbose mode.
     """
 
-    def __init__(self, operators=None, show_banner=False, sanitize_input=False, verbose=True):
+    def __init__(self, operators=None, show_banner=False, sanitize_input=False, verbose=False):
 
         self._rules = []
         self._lvs = OrderedDict()

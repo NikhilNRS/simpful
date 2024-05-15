@@ -72,17 +72,24 @@ def encapsulate_then_clause(rule):
 
     return rule
 
-def format_rule(rule):
-    print("Original:", rule)
+def format_rule(rule, verbose=False):
+    if verbose:
+        print("Original:", rule)
     rule = strip_parentheses(rule)
-    print("Stripped Parentheses:", rule)
+    if verbose:
+        print("Stripped Parentheses:", rule)
     clauses = find_clauses(rule)
     rule = reintroduce_parentheses(rule, clauses)
-    print("Parentheses Reintroduced:", rule)
+    if verbose:
+        print("Parentheses Reintroduced:", rule)
     rule = handle_not_conditions(rule)
-    print("Handled NOT Conditions:", rule)
+    if verbose:
+        print("Handled NOT Conditions:", rule)
     rule = finalize_not_conditions(rule)
-    print("Finalized NOT Conditions:", rule)
+    if verbose:
+        print("Finalized NOT Conditions:", rule)
     rule = encapsulate_then_clause(rule)
-    print("Encapsulated THEN Clause:", rule)
+    if verbose:
+        print("Encapsulated THEN Clause:", rule)
     return rule
+

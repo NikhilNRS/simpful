@@ -59,7 +59,7 @@ class EvolvableFuzzySystem(FuzzySystem):
         """Adds a new fuzzy rule to the system."""
         super().add_rules([rule])
 
-    def mutate_feature(self, variable_store, verbose=False):
+    def mutate_feature(self, variable_store, verbose=True):
         """
         Mutates a feature within a rule by replacing it with another from the available features list,
         ensuring the terms are also compatible. Only one random feature-term pair is mutated.
@@ -133,7 +133,7 @@ class EvolvableFuzzySystem(FuzzySystem):
         # Replace the mutated rule in the system
         self.replace_rule(rule_index, mutated_rule, verbose=True)
     
-    def crossover(self, partner_system, variable_store, verbose=True):
+    def crossover(self, partner_system, variable_store, verbose=False):
         # Similar setup, but now uses variable_store for linguistic variables
         if not self._rules or not partner_system._rules:
             if verbose:
@@ -183,7 +183,7 @@ class EvolvableFuzzySystem(FuzzySystem):
                     print(f"Warning: No predefined linguistic variable for '{feature}' in the store.")
 
 
-    def post_crossover_linguistic_verification(self, offspring1, offspring2, variable_store, verbose=True):
+    def post_crossover_linguistic_verification(self, offspring1, offspring2, variable_store, verbose=False):
         """
         Ensures that each offspring has all necessary linguistic variables after crossover.
         Verifies and adds missing variables from their predefined set of all_linguistic_variables.
@@ -224,7 +224,7 @@ class EvolvableFuzzySystem(FuzzySystem):
         """
 
         # Update the output function based on current features in the rules
-        self.update_output_function_based_on_features(verbose=True)
+        self.update_output_function_based_on_features(verbose=False)
 
         # Extract features used in the rules of this fuzzy system
         features_used = self.extract_features_from_rules()

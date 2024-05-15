@@ -86,7 +86,7 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
     def test_crossover(self):
         """Test crossover functionality with rule swapping checks."""
         partner_system = market_risk.clone()
-        offspring1, offspring2 = economic_health.crossover(partner_system, variable_store, verbose=True)
+        offspring1, offspring2 = economic_health.crossover(partner_system, variable_store, verbose=False)
 
         self.assertIsNotNone(offspring1, "Offspring 1 should be successfully created.")
         self.assertIsNotNone(offspring2, "Offspring 2 should be successfully created.")
