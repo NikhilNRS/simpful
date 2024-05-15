@@ -27,8 +27,30 @@ class EvolvableFuzzySystem(FuzzySystem):
             formatted_rules = [format_rule(rule) for rule in rules]
             return formatted_rules
         return rules
+    
+    def update_output_function_based_on_features(self, output_var_name="PricePrediction", coefficient=1, verbose=False):
+        """
+        Updates the output function of the fuzzy system based on the features used in the current rules.
 
+        Args:
+            output_var_name: The name of the output variable for which the output function is set.
+            coefficient: The coefficient to multiply each feature in the output function.
+            verbose: If True, prints additional details about the process.
+        """
+        # Extract features currently used in the rules
+        current_features = self.extract_features_from_rules()
         
+        # Generate the output function string based on these features
+        if current_features:
+            function_str = " + ".join([f"{coefficient}*{feature}" for feature in current_features])
+            self.set_output_function(output_var_name, function_str, verbose=verbose)
+            
+            if verbose:
+                print(f"Updated output function for '{output_var_name}' to '{function_str}'")
+        else:
+            if verbose:
+                print("No features available to update the output function.")
+
     def get_rules_(self):
         # Implement fetching rules without calling the rule_processor's process_rules_from_system
         return self._rules  # Assuming _rules holds the actual rules directly within the system
@@ -79,9 +101,6 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         if verbose:
             print(f"Mutated rule: Changed '{feature_to_replace} IS {current_term}' to '{new_feature} IS {new_term}' in rule.")
-
-
-
         
     def extract_features_from_rule(self, rule):
         """Extract unique features from a single fuzzy rule."""
@@ -203,6 +222,10 @@ class EvolvableFuzzySystem(FuzzySystem):
         :param print_predictions: Boolean, if True, prints the first 5 predictions.
         :return: List of predictions.
         """
+
+        # Update the output function based on current features in the rules
+        self.update_output_function_based_on_features(verbose=True)
+
         # Extract features used in the rules of this fuzzy system
         features_used = self.extract_features_from_rules()
 
