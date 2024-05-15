@@ -9,7 +9,7 @@ import re
 parent_dir = str(Path(__file__).resolve().parent.parent)
 sys.path.append(parent_dir)
 
-from instances import economic_health, market_risk, investment_opportunity, inflation_prediction, market_sentiment, make_predictions_with_models
+from instances import economic_health, market_risk, variable_store, investment_opportunity, inflation_prediction, market_sentiment, make_predictions_with_models
 
 
 class TestEvolvableFuzzySystem(unittest.TestCase):
@@ -45,7 +45,6 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
     def test_mutate_feature(self):
         """Test mutation of a feature within a rule and check linguistic variables."""
         # Assuming linguistic variable store is set up here or passed to the method that needs it.
-        variable_store = LinguisticVariableStore()  # Assuming this store is already populated.
         self.assertGreater(len(economic_health.get_rules()), 0, "There should be initial rules for mutation.")
         original_rules = economic_health.get_rules()
         original_variables = set(economic_health._lvs.keys())
@@ -87,7 +86,6 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
     def test_crossover(self):
         """Test crossover functionality with rule swapping checks."""
         partner_system = market_risk.clone()
-        variable_store = LinguisticVariableStore()  # Assuming it's populated
         offspring1, offspring2 = economic_health.crossover(partner_system, variable_store, verbose=True)
 
         self.assertIsNotNone(offspring1, "Offspring 1 should be successfully created.")
@@ -111,7 +109,7 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
     def test_crossover_produces_different_offspring(self):
         """Test crossover functionality ensures different offspring."""
         partner_system = market_risk.clone()
-        offspring1, offspring2 = economic_health.crossover(partner_system)
+        offspring1, offspring2 = economic_health.crossover(partner_system, variable_store)
 
         # Assert that both offspring are not None
         self.assertIsNotNone(offspring1, "First offspring should not be None")
@@ -123,9 +121,6 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
 
         # Check that the offspring are different from each other
         self.assertNotEqual(offspring1._rules, offspring2._rules, "The two offspring should have different rules")
-
-        # Additional checks for linguistic variables can be done if considered necessary
-
 
     def test_evaluate_fitness(self):
         """Test fitness evaluation based on RMSE."""

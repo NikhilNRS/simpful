@@ -37,7 +37,7 @@ class EvolvableFuzzySystem(FuzzySystem):
         """Adds a new fuzzy rule to the system."""
         super().add_rules([rule])
 
-    def mutate_feature(self, verbose=False):
+    def mutate_feature(self, variable_store, verbose=False):
         """
         Mutates a feature within a rule by replacing it with another from the available features list.
         Ensures that any new features introduced are supported by corresponding linguistic variables.
@@ -75,7 +75,7 @@ class EvolvableFuzzySystem(FuzzySystem):
         self.replace_rule(rule_index, mutated_rule, verbose=verbose)
 
         # Ensure all linguistic variables are still correctly defined after mutation
-        self.ensure_linguistic_variables(verbose=verbose)
+        self.ensure_linguistic_variables(variable_store, verbose=verbose)
 
         if verbose:
             print(f"Mutated rule: Changed '{feature_to_replace}' to '{new_feature}' in rule.")
@@ -161,13 +161,14 @@ class EvolvableFuzzySystem(FuzzySystem):
                     print(f"Warning: No predefined linguistic variable for '{feature}' in the store.")
 
 
-    def post_crossover_linguistic_verification(self, offspring1, offspring2):
+    def post_crossover_linguistic_verification(self, offspring1, offspring2, variable_store, verbose=True):
         """
         Ensures that each offspring has all necessary linguistic variables after crossover.
         Verifies and adds missing variables from their predefined set of all_linguistic_variables.
         """
-        offspring1.ensure_linguistic_variables(verbose=True)
-        offspring2.ensure_linguistic_variables(verbose=True)
+        offspring1.ensure_linguistic_variables(variable_store, verbose)
+        offspring2.ensure_linguistic_variables(variable_store, verbose)
+
 
     def evaluate_fitness(self, historical_data, predictions):
         """Calculates the fitness score based on a comparison metric like RMSE."""
