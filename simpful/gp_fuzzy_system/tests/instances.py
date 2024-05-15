@@ -277,6 +277,8 @@ if __name__ == "__main__":
             verbose_level = 3
         if "-vvvv" in sys.argv:
             verbose_level = 4
+        if "-vvvvv" in sys.argv:
+            verbose_level = 5
     
     # Initialize instances
     instances = {
@@ -326,3 +328,18 @@ if __name__ == "__main__":
                     print(f" - {rule}")
             else:
                 print("No rules found or get_rules method not returning correctly.")  # Debug print
+
+    if verbose_level == 5:
+        # Accessing sepsis_system directly
+        print("Testing removal of Linguistic Variable 'PaO2' from sepsis_system:")
+        
+        # Removing the 'PaO2' linguistic variable to see the effect
+        sepsis_system.remove_linguistic_variable("PaO2", verbose=True)
+
+        # Optionally, checking and displaying the remaining linguistic variables in the system
+        print("Remaining Linguistic Variables in the System:")
+        for lv_name in sepsis_system._lvs.keys():
+            print(f" - {lv_name}")
+
+        # Re-adding the 'PaO2' variable to check add functionality as well
+        sepsis_system.add_linguistic_variable("PaO2", LV1, verbose=True)

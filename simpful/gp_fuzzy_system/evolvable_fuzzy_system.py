@@ -141,6 +141,23 @@ class EvolvableFuzzySystem(FuzzySystem):
             print("New partner variables:", new_partner._lvs.keys())
 
         return new_self, new_partner
+    
+    def ensure_linguistic_variables(self, verbose=True):
+        """
+        Ensure each rule's linguistic variables are present in the fuzzy system. If any are missing, add them from the system's known set of all_linguistic_variables.
+        """
+        rule_features = self.extract_features_from_rules()
+        existing_variables = set(self._lvs.keys())
+
+        missing_variables = [feat for feat in rule_features if feat not in existing_variables]
+        for feature in missing_variables:
+            if feature in self.all_linguistic_variables:
+                self.add_linguistic_variable(feature, self.all_linguistic_variables[feature])
+                if verbose:
+                    print(f"Added missing linguistic variable for '{feature}'.")
+            else:
+                if verbose:
+                    print(f"Warning: No predefined linguistic variable for '{feature}'.")
 
     def post_crossover_linguistic_verification(self, offspring1, offspring2):
         """
@@ -211,23 +228,6 @@ class EvolvableFuzzySystem(FuzzySystem):
                 print(pred)
 
         return predictions
-    
-    def ensure_linguistic_variables(self, verbose=True):
-        """
-        Ensure each rule's linguistic variables are present in the fuzzy system. If any are missing, add them from the system's known set of all_linguistic_variables.
-        """
-        rule_features = self.extract_features_from_rules()
-        existing_variables = set(self._lvs.keys())
-
-        missing_variables = [feat for feat in rule_features if feat not in existing_variables]
-        for feature in missing_variables:
-            if feature in self.all_linguistic_variables:
-                self.add_linguistic_variable(feature, self.all_linguistic_variables[feature])
-                if verbose:
-                    print(f"Added missing linguistic variable for '{feature}'.")
-            else:
-                if verbose:
-                    print(f"Warning: No predefined linguistic variable for '{feature}'.")
 
 if __name__ == "__main__":
     pass

@@ -264,7 +264,7 @@ class FuzzySystem(object):
             verbose: True/False, toggles verbose mode.
     """
 
-    def __init__(self, operators=None, show_banner=True, sanitize_input=False, verbose=True):
+    def __init__(self, operators=None, show_banner=False, sanitize_input=False, verbose=True):
 
         self._rules = []
         self._lvs = OrderedDict()
@@ -483,6 +483,21 @@ class FuzzySystem(object):
         # self._lvs[name]=deepcopy(LV)
         if verbose: print(" * Linguistic variable '%s' successfully added" % name)
 
+    def remove_linguistic_variable(self, name, verbose=False):
+        """
+        Removes a linguistic variable from the fuzzy system.
+
+        Args:
+            name: string containing the name of the linguistic variable to be removed.
+            verbose: True/False, toggles verbose mode.
+        """
+        if name in self._lvs:
+            del self._lvs[name]
+            if verbose:
+                print(f" * Linguistic variable '{name}' successfully removed")
+        else:
+            if verbose:
+                print(f" * No linguistic variable named '{name}' found in the system")
 
     def set_crisp_output_value(self, name, value, verbose=False):
         """
