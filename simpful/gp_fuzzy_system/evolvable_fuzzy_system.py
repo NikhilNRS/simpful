@@ -119,29 +119,26 @@ class EvolvableFuzzySystem(FuzzySystem):
                 print("No rules available to crossover.")
             return None, None
 
-        # Select rule indices for crossover
         index_self, index_partner = gp_utilities.select_rule_indices(self._rules, partner_system._rules)
         if index_self is None or index_partner is None:
             if verbose:
                 print("Failed to select rule indices.")
             return None, None
 
-        # Use the built-in clone method to create independent copies
         new_self = self.clone()
         new_partner = partner_system.clone()
+        gp_utilities.swap_rules(new_self, new_partner, index_self, index_partner)
 
         if verbose:
             print(f"Cloned systems for crossover. Swapping rules at indices {index_self} and {index_partner}.")
 
-        # Swap the rules using the utility function
-        gp_utilities.swap_rules(new_self, new_partner, index_self, index_partner)
-
-        # Post-crossover linguistic variable verification
         gp_utilities.verify_and_add_variables(new_self, self.all_linguistic_variables, verbose)
         gp_utilities.verify_and_add_variables(new_partner, partner_system.all_linguistic_variables, verbose)
 
         if verbose:
             print("Completed linguistic verification post-crossover.")
+            print("New self variables:", new_self._lvs.keys())
+            print("New partner variables:", new_partner._lvs.keys())
 
         return new_self, new_partner
 

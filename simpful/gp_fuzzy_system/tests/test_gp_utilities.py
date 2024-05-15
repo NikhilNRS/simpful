@@ -148,8 +148,8 @@ class TestSwapRules(unittest.TestCase):
 class TestVerifyAndAddVariables(unittest.TestCase):
     def test_verify_and_add_variables_with_actual_system(self):
         # Use a system with missing variables in the set of rules
-        system = economic_health.clone()  # Clone to avoid modifications
-        system._rules = ["IF (non_existent_var IS Low) THEN (Outcome IS Negative)"]
+        system = economic_health.clone()
+        system._rules = ["IF (non_existent_var IS Low) THEN (PricePrediction IS PricePrediction)"]
 
         # Assume non_existent_var is not in system._lvs but in all_linguistic_variables
         all_linguistic_variables = {'non_existent_var': spy_close_lv}  # Use an actual linguistic variable for the test
@@ -159,9 +159,6 @@ class TestVerifyAndAddVariables(unittest.TestCase):
 
         # Check if the variable was added
         self.assertIn('non_existent_var', system._lvs, "non_existent_var should have been added to the system's linguistic variables")
-
-if __name__ == '__main__':
-    unittest.main()
 
 if __name__ == '__main__':
     unittest.main()
