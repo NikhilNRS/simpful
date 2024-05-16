@@ -86,7 +86,6 @@ def remove_not_operator(index, sentence, verbose):
 
     return mutated_sentence
 
-
 def mutate_logical_operator(sentence, verbose=True, mutate_target=None):
     # Retrieve operator details using the updated find_logical_operators
     operator_details = find_logical_operators(sentence)
@@ -95,26 +94,28 @@ def mutate_logical_operator(sentence, verbose=True, mutate_target=None):
     if not operator_details:
         if verbose:
             print("No logical operators found to mutate.")
-        return sentence
+        return sentence, False  # Return False indicating no mutation was possible
     
     # Dictionary to map transitions and associated functions
     transition_map = {
-        ('AND', 'OR'): lambda idx, sent: sent[:idx] + 'OR' + sent[idx + len('AND'):],
-        ('OR', 'AND'): lambda idx, sent: sent[:idx] + 'AND' + sent[idx + len('OR'):],
+        ('AND', 'OR'): lambda idx, sent: (sent[:idx] + 'OR' + sent[idx + len('AND'):], True),
+        ('OR', 'AND'): lambda idx, sent: (sent[:idx] + 'AND' + sent[idx + len('OR'):], True),
         ('AND', 'NOT'): lambda idx, sent: insert_not_operator(idx, sent, verbose),
         ('OR', 'NOT'): lambda idx, sent: insert_not_operator(idx, sent, verbose),
         ('NOT', 'NOT'): lambda idx, sent: remove_not_operator(idx, sent, verbose),
-        # ('NOT', 'AND'),  ('NOT', 'OR'), (AND', 'AND'), ('OR', 'OR'),  are not allowed, handle them explicitly if needed
+        # Disallowed transitions
     }
+    
+    # Handle disallowed transitions explicitly
+    disallowed_transitions = {('NOT', 'AND'), ('NOT', 'OR'), ('AND', 'AND'), ('OR', 'OR')}
     
     # Handling mutation target
     if mutate_target:
-        # Use the provided mutate_target which specifies the operator and index to mutate
         old_operator = mutate_target['operator'].upper()
         index = mutate_target['index']
         new_operator = mutate_target.get('new_operator', old_operator)  # Default to the old operator if no new specified
     else:
-        # If no target provided, randomly select one (this branch may need rethinking or removal for strict usage)
+        # If no target provided, randomly select one
         chosen = random.choice([(op, detail['indices'][0]) for op, detail in operator_details.items() for _ in range(detail['count'])])
         old_operator = chosen[0]
         index = chosen[1]
@@ -122,19 +123,26 @@ def mutate_logical_operator(sentence, verbose=True, mutate_target=None):
     
     # Use the transition map to determine the mutation function
     key = (old_operator, new_operator)
+    
     if key in transition_map:
-        mutated_sentence = transition_map[key](index, sentence)
+        mutated_sentence, operation_valid = transition_map[key](index, sentence)
+    elif key in disallowed_transitions:
+        if verbose:
+            print(f"Disallowed transition from {old_operator} to {new_operator}. No mutation performed.")
+        return sentence, False  # Return False indicating that mutation is not allowed
     else:
         if verbose:
             print(f"Invalid transition from {old_operator} to {new_operator}. No mutation performed.")
-        return sentence  # Return original sentence if the transition is not allowed
+        return sentence, False  # Return False for any other invalid transitions
 
     if verbose:
         print(f"Mutating operator: {old_operator} at index {index} to {new_operator}")
         print(f"Original sentence: {sentence}")
         print(f"Mutated sentence: {mutated_sentence}")
 
-    return mutated_sentence
+    return mutated_sentence, operation_valid
+
+
 
 def select_rule_indices(rules1, rules2):
     """Selects random indices for rule swapping, ensuring indices are valid for both systems."""

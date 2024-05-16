@@ -129,36 +129,29 @@ class EvolvableFuzzySystem(FuzzySystem):
         features_set.update(features_in_rule)
 
         return list(features_set)
-    
+        
     def mutate_operator(self, verbose=True):
         """Selects a random rule, mutates it, and replaces the original with the new one, handling exceptions where mutation is not possible."""
         try:
-            current_rules = self.get_rules()  # Fetch current rules using the formatted get_rules
+            current_rules = self.get_rules()
             if not current_rules:
                 if verbose:
                     print("No rules available to mutate.")
                 return  # Exit if there are no rules to mutate
 
-            # Select a random rule to mutate
             rule_index = random.randint(0, len(current_rules) - 1)
             original_rule = current_rules[rule_index]
+            mutated_rule, valid_operation = gp_utilities.mutate_logical_operator(original_rule)
 
-            # Mutate this selected rule using the extracted features
-            mutated_rule = gp_utilities.mutate_logical_operator(original_rule)
-
-            if original_rule == mutated_rule:
+            if not valid_operation:
                 if verbose:
-                    print(f"No mutation occurred for the rule at index {rule_index}.")
+                    print(f"Invalid mutation attempt for the rule at index {rule_index}. No changes made.")
                 return
 
-            # Replace the mutated rule in the system
             self.replace_rule(rule_index, mutated_rule, verbose=verbose)
 
-            # Fetching and printing the state of the mutated rule if verbose
             if verbose:
-                # Re-fetch all rules after mutation to check the updated state
                 updated_rules = self.get_rules()
-                # Specifically, fetch and display the mutated rule using the known index
                 updated_mutated_rule = updated_rules[rule_index] if len(updated_rules) > rule_index else None
                 print(f"mutate_operator: Original rule at index {rule_index}: {original_rule}")
                 print(f"mutate_operator: Mutated rule at index {rule_index}: {updated_mutated_rule}")
@@ -167,7 +160,6 @@ class EvolvableFuzzySystem(FuzzySystem):
             if verbose:
                 print(f"An error occurred during the mutation process: {str(e)}")
 
-        
     def crossover(self, partner_system, variable_store, verbose=False):
         # Similar setup, but now uses variable_store for linguistic variables
         if not self._rules or not partner_system._rules:
