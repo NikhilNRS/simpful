@@ -104,7 +104,7 @@ def mutate_logical_operator(sentence, verbose=True, mutate_target=None):
         ('AND', 'NOT'): lambda idx, sent: insert_not_operator(idx, sent, verbose),
         ('OR', 'NOT'): lambda idx, sent: insert_not_operator(idx, sent, verbose),
         ('NOT', 'NOT'): lambda idx, sent: remove_not_operator(idx, sent, verbose),
-        # ('NOT', 'AND') and ('NOT', 'OR') are not allowed, handle them explicitly if needed
+        # ('NOT', 'AND'),  ('NOT', 'OR'), (AND', 'AND'), ('OR', 'OR'),  are not allowed, handle them explicitly if needed
     }
     
     # Handling mutation target

@@ -95,12 +95,26 @@ class EvolvableFuzzySystem(FuzzySystem):
         # Construct the mutated rule replacing the selected feature-term pair
         mutated_rule = original_rule.replace(f"{feature_to_replace} IS {current_term}", f"{new_feature} IS {new_term}")
 
-        # Replace the rule in the system and ensure all linguistic variables are correct
+        self.apply_feature_mutation(rule_index, original_rule, mutated_rule, variable_store, verbose)
+
+    def apply_feature_mutation(self, rule_index, original_rule, mutated_rule, variable_store, verbose=True):
+        """
+        Applies the mutated rule to the system and updates linguistic variables.
+        
+        Args:
+            rule_index (int): The index of the rule in the rule list to be mutated.
+            original_rule (str): The original rule before mutation.
+            mutated_rule (str): The rule after mutation.
+            variable_store (VariableStore): The storage of available variables and terms for the fuzzy system.
+            verbose (bool): If True, prints detailed logging for debugging.
+        """
         self.replace_rule(rule_index, mutated_rule, verbose=verbose)
         self.ensure_linguistic_variables(variable_store, verbose=verbose)
 
         if verbose:
-            print(f"Mutated rule: Changed '{feature_to_replace} IS {current_term}' to '{new_feature} IS {new_term}' in rule.")
+            print(f"mutate_feature: Original rule at index {rule_index}: {original_rule}")
+            print(f"mutate_feature: Applied mutation at rule index {rule_index}: {mutated_rule}")
+
         
     def extract_features_from_rule(self, rule):
         """Extract unique features from a single fuzzy rule."""
@@ -116,23 +130,44 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         return list(features_set)
     
-    def mutate_operator(self):
-        """Selects a random rule, mutates it, and replaces the original with the new one."""
-        current_rules = self.get_rules()  # Fetch current rules using the formatted get_rules
-        if not current_rules:
-            print("No rules available to mutate.")
-            return  # Exit if there are no rules to mutate
+    def mutate_operator(self, verbose=True):
+        """Selects a random rule, mutates it, and replaces the original with the new one, handling exceptions where mutation is not possible."""
+        try:
+            current_rules = self.get_rules()  # Fetch current rules using the formatted get_rules
+            if not current_rules:
+                if verbose:
+                    print("No rules available to mutate.")
+                return  # Exit if there are no rules to mutate
 
-        # Select a random rule to mutate
-        rule_index = random.randint(0, len(current_rules) - 1)
-        original_rule = current_rules[rule_index]
+            # Select a random rule to mutate
+            rule_index = random.randint(0, len(current_rules) - 1)
+            original_rule = current_rules[rule_index]
 
-        # Mutate this selected rule using the extracted features
-        mutated_rule = gp_utilities.mutate_logical_operator(original_rule)
+            # Mutate this selected rule using the extracted features
+            mutated_rule = gp_utilities.mutate_logical_operator(original_rule)
 
-        # Replace the mutated rule in the system
-        self.replace_rule(rule_index, mutated_rule, verbose=True)
-    
+            if original_rule == mutated_rule:
+                if verbose:
+                    print(f"No mutation occurred for the rule at index {rule_index}.")
+                return
+
+            # Replace the mutated rule in the system
+            self.replace_rule(rule_index, mutated_rule, verbose=verbose)
+
+            # Fetching and printing the state of the mutated rule if verbose
+            if verbose:
+                # Re-fetch all rules after mutation to check the updated state
+                updated_rules = self.get_rules()
+                # Specifically, fetch and display the mutated rule using the known index
+                updated_mutated_rule = updated_rules[rule_index] if len(updated_rules) > rule_index else None
+                print(f"mutate_operator: Original rule at index {rule_index}: {original_rule}")
+                print(f"mutate_operator: Mutated rule at index {rule_index}: {updated_mutated_rule}")
+
+        except Exception as e:
+            if verbose:
+                print(f"An error occurred during the mutation process: {str(e)}")
+
+        
     def crossover(self, partner_system, variable_store, verbose=False):
         # Similar setup, but now uses variable_store for linguistic variables
         if not self._rules or not partner_system._rules:

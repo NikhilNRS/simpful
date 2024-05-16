@@ -59,22 +59,23 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         self.assertNotEqual(original_variables, mutated_variables, "Linguistic variables should be updated to reflect mutation.")
         self.assertTrue(any(feature in variable_store.get_all_variables() for rule in mutated_rules for feature in re.findall(r'\b\w+\b', rule)), "Mutated features should exist within the available features list.")
 
-    def test_mutate_rule(self):
+    def test_mutate_operator(self, verbose=True):
         """Test mutation of a rule with added logging to check the structure and mutation effect."""
         # Get the initial formatted state of rules for comparison
         original_formatted_rules = economic_health.get_rules()
         original_rules_str = [str(rule) for rule in original_formatted_rules]
 
         # Perform mutation
-        economic_health.mutate_operator()
+        economic_health.mutate_operator(verbose=verbose)
 
         # Fetching the state of rules after mutation
         mutated_formatted_rules = economic_health.get_rules()
         mutated_rules_str = [str(rule) for rule in mutated_formatted_rules]
 
         # Output for clarity in test output
-        print("Original rules:", original_rules_str)
-        print("Mutated rules:", mutated_rules_str)
+        if verbose:
+            print("Original rules:", original_rules_str)
+            print("Mutated rules:", mutated_rules_str)
 
         # Assert that the rules have changed
         self.assertNotEqual(original_rules_str, mutated_rules_str, "Rules should be mutated.")
