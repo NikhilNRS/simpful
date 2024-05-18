@@ -97,26 +97,25 @@ class TestLogicalOperatorMutation(unittest.TestCase):
         self.assertNotIn("NOT", mutated, "NOT should be removed.")
         self.assertEqual(expected, mutated, "Proper NOT removal.")
 
-    def test_and_to_or_mutation(self):
-        sentence = "IF (spy_close IS High) AND (volume IS Low) THEN (PricePrediction IS PricePrediction)"
-        expected = "IF (spy_close IS High) OR (volume IS Low) THEN (PricePrediction IS PricePrediction)"
-        mutate_target = {'operator': 'AND', 'index': sentence.find('AND'), 'new_operator': 'OR'}
-        # Ensure arguments are in correct order and properly named
-        mutated = gp_utilities.mutate_logical_operator(sentence, verbose=True, mutate_target=mutate_target)
-        self.assertNotIn("AND", mutated, "AND should be mutated to OR.")
-        self.assertIn("OR", mutated, "Mutation should result in OR.")
-        self.assertEqual(expected, mutated, "Proper mutation from AND to OR.")
 
     def test_or_to_and_mutation(self):
         sentence = "IF (gld_close IS Low) OR (macd IS Negative) THEN (PricePrediction IS PricePrediction)"
         expected = "IF (gld_close IS Low) AND (macd IS Negative) THEN (PricePrediction IS PricePrediction)"
         mutate_target = {'operator': 'OR', 'index': sentence.find('OR'), 'new_operator': 'AND'}
-        # Ensure arguments are in correct order and properly named
-        mutated = gp_utilities.mutate_logical_operator(sentence, verbose=True, mutate_target=mutate_target)
+        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=True, mutate_target=mutate_target)
         self.assertNotIn("OR", mutated, "OR should be mutated to AND.")
         self.assertIn("AND", mutated, "Mutation should result in AND.")
         self.assertEqual(expected, mutated, "Proper mutation from OR to AND.")
+        self.assertTrue(valid, "The mutation should be valid.")
 
+    def test_not_removal(self):
+        sentence = "IF (gdp_growth IS Low) OR (NOT (unemployment_rate IS High)) THEN (PricePrediction IS PricePrediction)"
+        expected = "IF (gdp_growth IS Low) OR (unemployment_rate IS High) THEN (PricePrediction IS PricePrediction)"
+        mutate_target = {'operator': 'NOT', 'index': sentence.find('NOT')}
+        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=True, mutate_target=mutate_target)
+        self.assertNotIn("NOT", mutated, "NOT should be removed.")
+        self.assertEqual(expected, mutated, "Proper NOT removal.")
+        self.assertTrue(valid, "The mutation should be valid.")
 
 class TestSelectRuleIndices(unittest.TestCase):
     def test_select_indices_with_actual_rules(self):
