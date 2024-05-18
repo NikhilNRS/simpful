@@ -186,45 +186,6 @@ def add_variables_to_system(system, missing_variables, all_linguistic_variables,
             if verbose:
                 print(f"Warning: No predefined linguistic variable for '{var}'.")
 
-def verify_and_add_variables(system, variable_store, verbose=True):
-    """Ensures each rule's variables are present in the system using refactored functions."""
-    if verbose:
-        print("Starting verification and addition of variables.")
-        
-        raw_rules = []
-        try:
-            raw_rules = system.get_rules(format=False)  # Fetch raw rules without formatting
-            print(f"Raw rules: {raw_rules}")
-        except Exception as e:
-            print(f"Error fetching raw rules: {e}")
-
-        # Printing each rule individually to identify the problematic rule
-        for i, rule in enumerate(raw_rules):
-            try:
-                formatted_rule = format_rule(rule, verbose=verbose)
-                print(f"Rule {i}: {formatted_rule}")
-            except Exception as e:
-                print(f"Error formatting rule {i}: {rule} - Exception: {e}")
-
-        try:
-            formatted_rules = system.get_rules(format=True)  # Fetch formatted rules
-            print(f"Formatted rules: {formatted_rules}")
-        except Exception as e:
-            print(f"Error fetching formatted rules: {e}")
-
-        print(f"Initial linguistic variables: {list(system._lvs.keys())}")
-
-    missing_variables = extract_missing_variables(system)
-    if verbose:
-        print(f"Missing variables: {missing_variables}")
-
-    add_variables_to_system(system, missing_variables, variable_store, verbose)
-    
-    if verbose:
-        print(f"Final linguistic variables: {list(system._lvs.keys())}")
-        print("Verification and addition of variables completed.")
-
-
 def add_variables_to_system(system, missing_variables, variable_store, verbose=True):
     """Adds missing variables to the system from the variable_store."""
     for var in missing_variables:

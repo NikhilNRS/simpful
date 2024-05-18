@@ -181,9 +181,9 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         gp_utilities.swap_rules(new_self, new_partner, index_self, index_partner)
 
-        # Use variable_store for verification
-        gp_utilities.verify_and_add_variables(new_self, variable_store, verbose)
-        gp_utilities.verify_and_add_variables(new_partner, variable_store, verbose)
+        # # Use variable_store for verification
+        # gp_utilities.verify_and_add_variables(new_self, variable_store, verbose)
+        # gp_utilities.verify_and_add_variables(new_partner, variable_store, verbose)
 
         if verbose:
             print("Completed linguistic verification post-crossover.")
