@@ -64,7 +64,7 @@ def insert_not_operator(index, sentence, verbose):
         if verbose:
             print("No suitable condition found for NOT insertion after the operator.")
 
-    return mutated_sentence
+    return mutated_sentence, True
 
 def remove_not_operator(index, sentence, verbose):
     try:
@@ -84,7 +84,7 @@ def remove_not_operator(index, sentence, verbose):
         if verbose:
             print(f"Failed to remove NOT due to parsing error: {e}")
 
-    return mutated_sentence
+    return mutated_sentence, True
 
 def mutate_logical_operator(sentence, verbose=True, mutate_target=None):
     # Retrieve operator details using the updated find_logical_operators
