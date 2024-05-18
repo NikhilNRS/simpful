@@ -58,7 +58,7 @@ class TestLogicalOperatorMutation(unittest.TestCase):
 
     def test_no_operator_present(self):
         sentence = "IF (gdp_growth IS High) THEN (PricePrediction IS PricePrediction)"
-        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=True)
+        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=False)
         self.assertEqual(sentence, mutated, "Sentence should remain unchanged when no logical operators are present.")
         self.assertFalse(valid, "The mutation should be invalid when no logical operators are present.")
 
@@ -68,7 +68,7 @@ class TestLogicalOperatorMutation(unittest.TestCase):
         expected = "IF (gdp_growth IS Low) OR (NOT (unemployment_rate IS High)) THEN (PricePrediction IS PricePrediction)"
         # Clearly specify where and what to insert
         mutate_target = {'operator': 'OR', 'index': sentence.find('OR') + len('OR') + 1, 'new_operator': 'NOT'}
-        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=True, mutate_target=mutate_target)
+        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=False, mutate_target=mutate_target)
         self.assertIn("NOT", mutated, "NOT should be inserted.")
         self.assertEqual(expected, mutated, "Proper NOT insertion with parentheses.")
         self.assertTrue(valid, "The mutation should be valid.")
@@ -82,7 +82,7 @@ class TestLogicalOperatorMutation(unittest.TestCase):
         'new_operator': 'NOT'
         }
         expected = "IF (gdp_growth IS Low) AND (unemployment_rate IS High) OR (inflation_rate IS Low) AND (market_trend IS Positive) THEN (PricePrediction IS PricePrediction)"
-        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=True, mutate_target=mutate_target)
+        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=False, mutate_target=mutate_target)
         self.assertNotIn("NOT (market_trend IS Positive)", mutated, "NOT should be removed.")
         self.assertEqual(mutated, expected, "The sentence should have 'NOT' correctly removed.")
         self.assertTrue(valid, "The mutation should be valid.")
@@ -93,7 +93,7 @@ class TestLogicalOperatorMutation(unittest.TestCase):
         expected = "IF (gdp_growth IS Low) OR (unemployment_rate IS High) THEN (PricePrediction IS PricePrediction)"
         # Manually specify the NOT to remove
         mutate_target = {'operator': 'NOT', 'index': sentence.find('NOT')}
-        mutated = gp_utilities.mutate_logical_operator(sentence, verbose=True, mutate_target=mutate_target)
+        mutated = gp_utilities.mutate_logical_operator(sentence, verbose=False, mutate_target=mutate_target)
         self.assertNotIn("NOT", mutated, "NOT should be removed.")
         self.assertEqual(expected, mutated, "Proper NOT removal.")
 
@@ -102,7 +102,7 @@ class TestLogicalOperatorMutation(unittest.TestCase):
         sentence = "IF (gld_close IS Low) OR (macd IS Negative) THEN (PricePrediction IS PricePrediction)"
         expected = "IF (gld_close IS Low) AND (macd IS Negative) THEN (PricePrediction IS PricePrediction)"
         mutate_target = {'operator': 'OR', 'index': sentence.find('OR'), 'new_operator': 'AND'}
-        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=True, mutate_target=mutate_target)
+        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=False, mutate_target=mutate_target)
         self.assertNotIn("OR", mutated, "OR should be mutated to AND.")
         self.assertIn("AND", mutated, "Mutation should result in AND.")
         self.assertEqual(expected, mutated, "Proper mutation from OR to AND.")
@@ -112,7 +112,7 @@ class TestLogicalOperatorMutation(unittest.TestCase):
         sentence = "IF (gdp_growth IS Low) OR (NOT (unemployment_rate IS High)) THEN (PricePrediction IS PricePrediction)"
         expected = "IF (gdp_growth IS Low) OR (unemployment_rate IS High) THEN (PricePrediction IS PricePrediction)"
         mutate_target = {'operator': 'NOT', 'index': sentence.find('NOT')}
-        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=True, mutate_target=mutate_target)
+        mutated, valid = gp_utilities.mutate_logical_operator(sentence, verbose=False, mutate_target=mutate_target)
         self.assertNotIn("NOT", mutated, "NOT should be removed.")
         self.assertEqual(expected, mutated, "Proper NOT removal.")
         self.assertTrue(valid, "The mutation should be valid.")
@@ -160,4 +160,3 @@ class TestVerifyAndAddVariables(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

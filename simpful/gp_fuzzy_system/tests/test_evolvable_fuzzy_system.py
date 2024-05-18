@@ -73,7 +73,7 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
 
 
 
-    def test_mutate_operator(self, verbose=True):
+    def test_mutate_operator(self, verbose=False):
         """Test mutation of a rule with added logging to check the structure and mutation effect."""
         original_formatted_rules = economic_health.get_rules()
         original_rules_str = [str(rule) for rule in original_formatted_rules]

@@ -59,7 +59,7 @@ class EvolvableFuzzySystem(FuzzySystem):
         """Adds a new fuzzy rule to the system."""
         super().add_rules([rule])
 
-    def mutate_feature(self, variable_store, verbose=True):
+    def mutate_feature(self, variable_store, verbose=False):
         """
         Mutates a feature within a rule by replacing it with another from the available features list,
         ensuring the terms are also compatible. Only one random feature-term pair is mutated.
@@ -97,7 +97,7 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         self.apply_feature_mutation(rule_index, original_rule, mutated_rule, variable_store, verbose)
 
-    def apply_feature_mutation(self, rule_index, original_rule, mutated_rule, variable_store, verbose=True):
+    def apply_feature_mutation(self, rule_index, original_rule, mutated_rule, variable_store, verbose=False):
         """
         Applies the mutated rule to the system and updates linguistic variables.
         
@@ -117,8 +117,6 @@ class EvolvableFuzzySystem(FuzzySystem):
         
         self.cleanup_unused_linguistic_variables(verbose=verbose)  # Cleanup after mutation
 
-
-        
     def extract_features_from_rule(self, rule):
         """Extract unique features from a single fuzzy rule."""
         if not rule:

@@ -1,6 +1,7 @@
 import numpy as np
 import re
 import random
+from rule_processor import format_rule
 
 def tournament_selection(population, fitness_scores, tournament_size=3):
     """Implements tournament selection."""
@@ -66,7 +67,7 @@ def insert_not_operator(index, sentence, verbose):
 
     return mutated_sentence, True
 
-def remove_not_operator(index, sentence, verbose):
+def remove_not_operator(index, sentence, verbose=False):
     try:
         # Ensure we are starting at the right index
         if sentence[index:index+3] != "NOT":
@@ -86,7 +87,7 @@ def remove_not_operator(index, sentence, verbose):
 
     return mutated_sentence, True
 
-def mutate_logical_operator(sentence, verbose=True, mutate_target=None):
+def mutate_logical_operator(sentence, verbose=False, mutate_target=None):
     # Retrieve operator details using the updated find_logical_operators
     operator_details = find_logical_operators(sentence)
     
@@ -100,9 +101,9 @@ def mutate_logical_operator(sentence, verbose=True, mutate_target=None):
     transition_map = {
         ('AND', 'OR'): lambda idx, sent: (sent[:idx] + 'OR' + sent[idx + len('AND'):], True),
         ('OR', 'AND'): lambda idx, sent: (sent[:idx] + 'AND' + sent[idx + len('OR'):], True),
-        ('AND', 'NOT'): lambda idx, sent: insert_not_operator(idx, sent, verbose),
-        ('OR', 'NOT'): lambda idx, sent: insert_not_operator(idx, sent, verbose),
-        ('NOT', 'NOT'): lambda idx, sent: remove_not_operator(idx, sent, verbose),
+        ('AND', 'NOT'): lambda idx, sent: insert_not_operator(idx, sent, verbose=False),
+        ('OR', 'NOT'): lambda idx, sent: insert_not_operator(idx, sent, verbose=False),
+        ('NOT', 'NOT'): lambda idx, sent: remove_not_operator(idx, sent, verbose=False),
         # Disallowed transitions
     }
     
@@ -187,8 +188,42 @@ def add_variables_to_system(system, missing_variables, all_linguistic_variables,
 
 def verify_and_add_variables(system, variable_store, verbose=True):
     """Ensures each rule's variables are present in the system using refactored functions."""
+    if verbose:
+        print("Starting verification and addition of variables.")
+        
+        raw_rules = []
+        try:
+            raw_rules = system.get_rules(format=False)  # Fetch raw rules without formatting
+            print(f"Raw rules: {raw_rules}")
+        except Exception as e:
+            print(f"Error fetching raw rules: {e}")
+
+        # Printing each rule individually to identify the problematic rule
+        for i, rule in enumerate(raw_rules):
+            try:
+                formatted_rule = format_rule(rule, verbose=verbose)
+                print(f"Rule {i}: {formatted_rule}")
+            except Exception as e:
+                print(f"Error formatting rule {i}: {rule} - Exception: {e}")
+
+        try:
+            formatted_rules = system.get_rules(format=True)  # Fetch formatted rules
+            print(f"Formatted rules: {formatted_rules}")
+        except Exception as e:
+            print(f"Error fetching formatted rules: {e}")
+
+        print(f"Initial linguistic variables: {list(system._lvs.keys())}")
+
     missing_variables = extract_missing_variables(system)
+    if verbose:
+        print(f"Missing variables: {missing_variables}")
+
     add_variables_to_system(system, missing_variables, variable_store, verbose)
+    
+    if verbose:
+        print(f"Final linguistic variables: {list(system._lvs.keys())}")
+        print("Verification and addition of variables completed.")
+
 
 def add_variables_to_system(system, missing_variables, variable_store, verbose=True):
     """Adds missing variables to the system from the variable_store."""
