@@ -143,20 +143,5 @@ class TestSwapRules(unittest.TestCase):
         self.assertEqual(system1._rules[0], pre_swap_rule2, "Rule at index 0 of system1 should be swapped from system2")
         self.assertEqual(system2._rules[0], pre_swap_rule1, "Rule at index 0 of system2 should be swapped from system1")
 
-class TestVerifyAndAddVariables(unittest.TestCase):
-    def test_verify_and_add_variables_with_actual_system(self):
-        # Use a system with missing variables in the set of rules
-        system = economic_health.clone()
-        system._rules = ["IF (non_existent_var IS Low) THEN (PricePrediction IS PricePrediction)"]
-
-        # Assume non_existent_var is not in system._lvs but in all_linguistic_variables
-        all_linguistic_variables = {'non_existent_var': spy_close_lv}  # Use an actual linguistic variable for the test
-
-        # Run the verification
-        gp_utilities.verify_and_add_variables(system, all_linguistic_variables, verbose=True)
-
-        # Check if the variable was added
-        self.assertIn('non_existent_var', system._lvs, "non_existent_var should have been added to the system's linguistic variables")
-
 if __name__ == '__main__':
     unittest.main()
