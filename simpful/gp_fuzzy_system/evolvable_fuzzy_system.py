@@ -114,6 +114,9 @@ class EvolvableFuzzySystem(FuzzySystem):
         if verbose:
             print(f"mutate_feature: Original rule at index {rule_index}: {original_rule}")
             print(f"mutate_feature: Applied mutation at rule index {rule_index}: {mutated_rule}")
+        
+        self.cleanup_unused_linguistic_variables(verbose=verbose)  # Cleanup after mutation
+
 
         
     def extract_features_from_rule(self, rule):
@@ -130,7 +133,7 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         return list(features_set)
         
-    def mutate_operator(self, verbose=True):
+    def mutate_operator(self, verbose=False):
         """Selects a random rule, mutates it, and replaces the original with the new one, handling exceptions where mutation is not possible."""
         try:
             current_rules = self.get_rules()
@@ -189,6 +192,13 @@ class EvolvableFuzzySystem(FuzzySystem):
             print("New self variables:", new_self._lvs.keys())
             print("New partner variables:", new_partner._lvs.keys())
 
+        # Remove this later
+        verbose=True
+
+        new_self.cleanup_unused_linguistic_variables(verbose=verbose)  # Cleanup after crossover
+        new_partner.cleanup_unused_linguistic_variables(verbose=verbose)  # Cleanup after crossover
+
+
         return new_self, new_partner
     
     def ensure_linguistic_variables(self, variable_store, verbose=True):
@@ -224,22 +234,35 @@ class EvolvableFuzzySystem(FuzzySystem):
         rmse = np.sqrt(np.mean((np.array(predictions) - np.array(historical_data)) ** 2))
         self.fitness_score = rmse
         return self.fitness_score
-
-    def extract_features_from_rules(self):
+    
+    def extract_features_from_rules(self, verbose=True):
         """Extract unique features from the current fuzzy rules."""
         current_rules = self.get_rules()
         if not current_rules:
-            print("No rules to analyze.")
+            if verbose:
+                print("No rules to analyze.")
             return []
 
         features_set = set()
         for rule in current_rules:
-            # Find all alphanumeric words in the rule; assume they include feature names
-            words = re.findall(r'\w+', rule)
-            features_in_rule = [word for word in words if word in self.available_features]
-            features_set.update(features_in_rule)
+            # Split the rule at 'THEN' and take the part before 'THEN'
+            if 'THEN' in rule:
+                before_then = rule.split('THEN')[0].strip()
+                
+                # Find all alphanumeric words in the part before 'THEN'; assume they include feature names
+                words = re.findall(r'\w+', before_then)
+                features_in_rule = [word for word in words if word in self.available_features]
+                features_set.update(features_in_rule)
+                
+                if verbose:
+                    print(f"Rule: {rule}")
+                    print(f"Extracted features: {features_in_rule}")
+
+        if verbose:
+            print(f"Unique features from all rules: {list(features_set)}")
 
         return list(features_set)
+
     
     def predict_with_fis(self, data, print_predictions=False):
         """
@@ -284,6 +307,24 @@ class EvolvableFuzzySystem(FuzzySystem):
                 print(pred)
 
         return predictions
+    
+    def cleanup_unused_linguistic_variables(self, verbose=True):
+        """
+        Removes linguistic variables that are no longer used in any of the current rules.
+        
+        Args:
+            verbose: True/False, toggles verbose mode.
+        """
+        # Extract all features currently used in the rules
+        used_features = set(self.extract_features_from_rules())
+
+        # Identify and remove unused linguistic variables
+        for variable in list(self._lvs.keys()):
+            if variable not in used_features:
+                self.remove_linguistic_variable(variable, verbose=verbose)
+                if verbose:
+                    print(f"cleanup_unused_linguistic_variables: Removed unused linguistic variable '{variable}'")
+
 
 if __name__ == "__main__":
     pass
