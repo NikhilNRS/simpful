@@ -48,7 +48,6 @@ def save_to_timestamped_dir(obj, base_dir, filename):
     
     return dir_path
 
-
 def load_populations_and_best_models(base_directory):
     """
     Load all populations and best models from the respective directories under the base directory.
@@ -64,6 +63,11 @@ def load_populations_and_best_models(base_directory):
     
     population_dir = os.path.join(base_directory, 'population_dir')
     best_model_dir = os.path.join(base_directory, 'best_model_dir')
+    
+    if not os.path.exists(population_dir):
+        raise FileNotFoundError(f"'population_dir' does not exist in the specified path: {base_directory}")
+    if not os.path.exists(best_model_dir):
+        raise FileNotFoundError(f"'best_model_dir' does not exist in the specified path: {base_directory}")
     
     population_subdirs = [d for d in os.listdir(population_dir) if os.path.isdir(os.path.join(population_dir, d))]
     best_model_subdirs = [d for d in os.listdir(best_model_dir) if os.path.isdir(os.path.join(best_model_dir, d))]
