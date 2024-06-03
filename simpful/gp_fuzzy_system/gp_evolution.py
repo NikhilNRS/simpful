@@ -97,7 +97,7 @@ def evaluate_population(variable_store, population, backup_population, max_rules
     for i in range(len(population)):
         fitness_score = None
         replacement_attempts = 0
-        max_attempts = 1000
+        max_attempts = 10
         
         while fitness_score is None and replacement_attempts < max_attempts:
             try:
@@ -122,6 +122,7 @@ def evaluate_population(variable_store, population, backup_population, max_rules
                     replacement_attempts += 1
         
         if fitness_score is None:
+            logging.error(f"Unable to evaluate fitness for system {i} after {max_attempts} attempts. Assigning infinite fitness score.")
             fitness_score = float('inf')  # Assign a very high positive fitness score
             fitness_scores.append(fitness_score)
     return fitness_scores
