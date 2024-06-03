@@ -105,10 +105,25 @@ def tournament_selection(population, fitness_scores, tournament_size, selection_
 
 
 def roulette_wheel_selection(population, fitness_scores):
-    """Implements roulette wheel selection."""
-    inverse_fitness_scores = [1.0 / score if score != 0 else 1.0 for score in fitness_scores]
+    # Replace infinite fitness scores with a very large finite value
+    finite_fitness_scores = [score if score != float('inf') else 1e10 for score in fitness_scores]
+    
+    inverse_fitness_scores = [1.0 / score if score != 0 else 1.0 for score in finite_fitness_scores]
     fitness_sum = sum(inverse_fitness_scores)
-    probability_distribution = [score / fitness_sum for score in inverse_fitness_scores]
+    
+    # Debugging: Print fitness scores and their inverses
+    print("Fitness Scores:", fitness_scores)
+    print("Finite Fitness Scores:", finite_fitness_scores)
+    print("Inverse Fitness Scores:", inverse_fitness_scores)
+    print("Fitness Sum:", fitness_sum)
+    
+    if fitness_sum == 0:
+        # Handle the case where fitness_sum is zero
+        print("Fitness sum is zero. Using uniform distribution for selection.")
+        probability_distribution = [1.0 / len(inverse_fitness_scores)] * len(inverse_fitness_scores)
+    else:
+        probability_distribution = [score / fitness_sum for score in inverse_fitness_scores]
+    
     selected_indices = np.random.choice(len(population), size=len(population), p=probability_distribution)
     return [population[i] for i in selected_indices]
 
