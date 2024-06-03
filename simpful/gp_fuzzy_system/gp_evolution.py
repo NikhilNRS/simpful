@@ -266,7 +266,7 @@ def handle_early_stopping(current_best_fitness, best_fitness, no_improvement_cou
                 print(f"Error loading populations and best models: {e}")
                 return population, fitness_scores, best_fitness, no_improvement_counter, loaded_data, True
         
-        if loaded_data:
+        if isinstance(loaded_data, dict):
             best_models = find_best_models(loaded_data, num_replace_worst)
             population = replace_worst_models_with_best(population, fitness_scores, best_models, num_replace_worst)
             fitness_scores = evaluate_population(variable_store, population, backup_population, max_rules, available_features, x_train, y_train, min_rules, verbose, generation, max_generations)
@@ -282,10 +282,10 @@ def handle_early_stopping(current_best_fitness, best_fitness, no_improvement_cou
 def genetic_algorithm_loop(population_size, max_generations, x_train, y_train, variable_store, 
                            selection_method='hybrid', tournament_size=3, crossover_rate=0.8, mutation_rate=0.2, 
                            elitism_rate=0.05, max_rules=10, min_rules=3, verbose=False, early_stop=True,
-                           seed_population_from=None, num_seed_individuals=0, load_from=None, num_replace_worst=12):
+                           seed_population_from=None, num_seed_individuals=0, load_from=None, num_replace_worst=5):
     
     population, backup_population, available_features = initialize_algorithm(population_size, variable_store, max_rules, x_train, y_train, min_rules, verbose, seed_population_from, num_seed_individuals)
-    loaded_data = '/Users/nikhilrazab-sekh/Desktop/simpful/simpful/gp_fuzzy_system/tests'  # We will load this only if we need to
+    loaded_data = None  # We will load this only if we need to
 
     progress_bar = tqdm(total=max_generations, desc="Generations", unit="gen")
 
@@ -329,12 +329,9 @@ def genetic_algorithm_loop(population_size, max_generations, x_train, y_train, v
             if should_stop:
                 break
     
-    best_system, final_fitness_scores = finalize_algorithm(progress_bar, population, variable_store, backup_population, max_rules, available_features, x_train, y_train, min_rules, verbose, generation, max_generations)
-
-    print(final_fitness_scores)
+    best_system = finalize_algorithm(progress_bar, population, variable_store, backup_population, max_rules, available_features, x_train, y_train, min_rules, verbose, generation, max_generations)
 
     return best_system, list(zip(range(len(best_fitness_per_generation)), best_fitness_per_generation)), list(zip(range(len(average_fitness_per_generation)), average_fitness_per_generation))
-
 
 
 # Example usage
