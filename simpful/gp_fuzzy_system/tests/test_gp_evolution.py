@@ -167,7 +167,7 @@ class TestGeneticAlgorithm(unittest.TestCase):
             selection_method=self.selection_method, tournament_size=self.tournament_size, 
             crossover_rate=self.crossover_rate, mutation_rate=self.mutation_rate, 
             elitism_rate=self.elitism_rate, max_rules=self.max_rules, min_rules=self.min_rules,
-            seed_population_from='./saved_models/', num_seed_individuals=3, load_from='./',
+            seed_population_from='./saved_models/', num_seed_individuals=1, load_from='./',
             verbose=False)
         
         # Convert the lists of tuples into DataFrames

@@ -119,4 +119,4 @@ if __name__ == "__main__":
     main()
 
 # Usage
-# python generate_terms_dict.py tests/gp_data_x_train.csv sk-proj-token -v
+# python generate_terms_dict.py tests/gp_data_X_train.csv sk-proj-token -v

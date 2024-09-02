@@ -47,7 +47,7 @@ def evaluate_fitness(system, predictions, actual, weights=None):
     stability of predictions over time, financial utility, and penalizes zero predictions.
     """
     if weights is None:
-        weights = {'rmse': 0.88, 'stability': 0.02, 'utility': 0.02, 'zero_penalty': 0.08}
+        weights = {'rmse': 0.95, 'stability': 0, 'utility': 0, 'zero_penalty': 0}
     else:
         # Ensure zero_penalty is included in weights
         weights.setdefault('zero_penalty', 0.05)
