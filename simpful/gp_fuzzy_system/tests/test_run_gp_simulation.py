@@ -7,7 +7,7 @@ class TestRunGPSimulation(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'run_gp_simulation.py'))
-        cls.x_train_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'gp_data_x_train.csv'))
+        cls.x_train_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'gp_data_X_train.csv'))
         cls.y_train_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'gp_data_y_train.csv'))
         cls.terms_dict_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'terms_dict.py'))
 

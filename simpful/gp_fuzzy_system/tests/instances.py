@@ -16,7 +16,7 @@ market_sentiment = EvolvableFuzzySystem()
 sepsis_system = EvolvableFuzzySystem()
 
 # Load the CSV data
-file_path = os.path.join(os.path.dirname(__file__), 'gp_data_x_train.csv')
+file_path = os.path.join(os.path.dirname(__file__), 'gp_data_X_train.csv')
 terms_dict_path = os.path.join(os.path.dirname(__file__), '..', 'terms_dict.py')
 exclude_columns = ['month', 'day', 'hour']
 verbose = False

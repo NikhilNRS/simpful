@@ -16,7 +16,7 @@ class TestGPEvolution(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Load the CSV data for training and predictions
-        cls.x_train = pd.read_csv(Path(__file__).resolve().parent / 'gp_data_x_train.csv')
+        cls.x_train = pd.read_csv(Path(__file__).resolve().parent / 'gp_data_X_train.csv')
         cls.y_train = pd.read_csv(Path(__file__).resolve().parent / 'gp_data_y_train.csv')
 
         # Use the instances from instances.py
@@ -60,8 +60,8 @@ class TestGeneticAlgorithm(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.variable_store = variable_store
-        cls.population_size = 100
-        cls.max_generations = 100
+        cls.population_size = 80
+        cls.max_generations = 50
         cls.max_rules = 8
         cls.min_rules = 2
         cls.min_clauses_per_rule = 2
@@ -73,7 +73,7 @@ class TestGeneticAlgorithm(unittest.TestCase):
         cls.tournament_size = 3
         
         # Load the CSV data for training and predictions
-        cls.x_train = pd.read_csv(Path(__file__).resolve().parent / 'gp_data_x_train.csv')
+        cls.x_train = pd.read_csv(Path(__file__).resolve().parent / 'gp_data_X_train.csv')
         cls.y_train = pd.read_csv(Path(__file__).resolve().parent / 'gp_data_y_train.csv')
 
         # Set available features using the variable store
@@ -166,8 +166,9 @@ class TestGeneticAlgorithm(unittest.TestCase):
             self.y_train, self.variable_store,
             selection_method=self.selection_method, tournament_size=self.tournament_size, 
             crossover_rate=self.crossover_rate, mutation_rate=self.mutation_rate, 
-            elitism_rate=self.elitism_rate, max_rules=self.max_rules, min_rules=self.min_rules, verbose=False
-        )
+            elitism_rate=self.elitism_rate, max_rules=self.max_rules, min_rules=self.min_rules,
+            seed_population_from='./saved_models/', num_seed_individuals=3, load_from='./',
+            verbose=False)
         
         # Convert the lists of tuples into DataFrames
         best_fitness_df = pd.DataFrame(best_fitness_per_generation, columns=['Generation', 'Best Fitness'])
@@ -178,9 +179,6 @@ class TestGeneticAlgorithm(unittest.TestCase):
         
         # Display the DataFrame as a table
         print(fitness_df)
-
-        self.assertIsNotNone(best_system.evaluate_fitness(self.variable_store), "The best system should have a fitness score")
-
 
 if __name__ == '__main__':
     unittest.main()

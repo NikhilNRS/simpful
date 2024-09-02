@@ -15,7 +15,7 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Load the CSV data
-        cls.x_train = pd.read_csv(Path(__file__).resolve().parent / 'gp_data_x_train.csv')
+        cls.x_train = pd.read_csv(Path(__file__).resolve().parent / 'gp_data_X_train.csv')
         cls.y_train = pd.read_csv(Path(__file__).resolve().parent / 'gp_data_y_train.csv')
 
         # Assuming variable_store is initialized somewhere before or passed as a parameter
@@ -30,7 +30,7 @@ class TestEvolvableFuzzySystem(unittest.TestCase):
         economic_health.load_data(x_train=cls.x_train, y_train=cls.y_train)
 
         # Create a variable store using the FuzzyLinguisticVariableProcessor
-        file_path = Path(__file__).resolve().parent / 'gp_data_x_train.csv'
+        file_path = Path(__file__).resolve().parent / 'gp_data_X_train.csv'
         terms_dict_path = Path(__file__).resolve().parent.parent / 'terms_dict.py'
         exclude_columns = ['month', 'day', 'hour']
         verbose = False
