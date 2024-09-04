@@ -1,32 +1,55 @@
 import sys
 import os
+import pandas as pd
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from simpful.gp_fuzzy_system.rule_generator import RuleGenerator
 from simpful.gp_fuzzy_system.evolvable_fuzzy_system import EvolvableFuzzySystem
 from simpful.gp_fuzzy_system.auto_lvs import FuzzyLinguisticVariableProcessor
-
 from pathlib import Path
 
-# Initializing EvolvableFuzzySystem instances
-economic_health = EvolvableFuzzySystem()
-market_risk = EvolvableFuzzySystem()
-investment_opportunity = EvolvableFuzzySystem()
-inflation_prediction = EvolvableFuzzySystem()
-market_sentiment = EvolvableFuzzySystem()
-sepsis_system = EvolvableFuzzySystem()
+
+def read_exclude_columns_from_file(file_path):
+    """Helper function to read column names to exclude from a file."""
+    try:
+        exclude_columns_df = pd.read_csv(file_path, header=None)
+        exclude_columns = exclude_columns_df.iloc[:, 0].tolist()
+        return [col.strip() for col in exclude_columns if col.strip()]
+    except Exception as e:
+        print(f"Error reading exclude columns file: {e}")
+        return []
+
 
 # Load the CSV data
 file_path = os.path.join(os.path.dirname(__file__), 'gp_data_X_train.csv')
 terms_dict_path = os.path.join(os.path.dirname(__file__), '..', 'terms_dict.py')
-exclude_columns = ['month', 'day', 'hour']
+exclude_columns_input = os.path.join(os.path.dirname(__file__), 'features/least_important_features.csv')
 verbose = False
 mf_type = 'sigmoid'  # or 'triangular' or 'sigmoid'
+
+# Always exclude 'month', 'day', and 'hour'
+default_exclude_columns = ['month', 'day', 'hour']
+
+# Check if exclude_columns_input is a file path and read additional columns if it exists
+if os.path.isfile(exclude_columns_input):
+    exclude_columns = read_exclude_columns_from_file(exclude_columns_input)
+    exclude_columns = list(set(default_exclude_columns + exclude_columns))  # Combine and remove duplicates
+else:
+    exclude_columns = default_exclude_columns  # Only use the default exclusions
+
 
 # Initialize the FuzzyLinguisticVariableProcessor
 processor = FuzzyLinguisticVariableProcessor(file_path, terms_dict_path, verbose, exclude_columns, mf_type)
 
 # Process the dataset
 variable_store = processor.process_dataset()
+
+# Initialize EvolvableFuzzySystem instances
+economic_health = EvolvableFuzzySystem()
+market_risk = EvolvableFuzzySystem()
+investment_opportunity = EvolvableFuzzySystem()
+inflation_prediction = EvolvableFuzzySystem()
+market_sentiment = EvolvableFuzzySystem()
+sepsis_system = EvolvableFuzzySystem()
 
 # Initialize instances
 instances = {

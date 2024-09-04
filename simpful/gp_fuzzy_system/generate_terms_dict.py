@@ -2,6 +2,7 @@ import openai
 import pandas as pd
 import argparse
 import re
+import os
 
 
 def construct_prompt(column_name, stats):
