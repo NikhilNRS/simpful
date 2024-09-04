@@ -11,18 +11,30 @@ from pathlib import Path
 def read_exclude_columns_from_file(file_path):
     """Helper function to read column names to exclude from a file."""
     try:
+        # Read the CSV file into a DataFrame
         exclude_columns_df = pd.read_csv(file_path, header=None)
-        exclude_columns = exclude_columns_df.iloc[:, 0].tolist()
-        return [col.strip() for col in exclude_columns if col.strip()]
+
+        # Debug print to show the DataFrame
+        print("Exclude Columns DataFrame:")
+        print(exclude_columns_df)  # Print entire DataFrame to inspect
+
+        # Flatten the DataFrame to a single list of column names
+        exclude_columns = exclude_columns_df.values.flatten().tolist()
+
+        # Strip whitespace and remove any empty strings
+        exclude_columns = [col.strip() for col in exclude_columns if str(col).strip()]
+
+        return exclude_columns
     except Exception as e:
         print(f"Error reading exclude columns file: {e}")
         return []
 
 
+
 # Load the CSV data
 file_path = os.path.join(os.path.dirname(__file__), 'gp_data_X_train.csv')
 terms_dict_path = os.path.join(os.path.dirname(__file__), '..', 'terms_dict.py')
-exclude_columns_input = os.path.join(os.path.dirname(__file__), 'features/least_important_features.csv')
+exclude_columns_input = os.path.join(os.path.dirname(__file__), 'least_important_features.csv')
 verbose = False
 mf_type = 'sigmoid'  # or 'triangular' or 'sigmoid'
 
