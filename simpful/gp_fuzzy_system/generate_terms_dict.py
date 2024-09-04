@@ -3,7 +3,7 @@ import pandas as pd
 import argparse
 import re
 
-# Function to construct the prompt for GPT-3.5-turbo-instruct-0914
+
 def construct_prompt(column_name, stats):
     prompt = f"""
 You are an expert in fuzzy logic systems. Based on the following statistics for the column '{column_name}':
@@ -16,20 +16,19 @@ Suggest appropriate fuzzy terms for this column in the format of a Python list, 
 """
     return prompt
 
-# Function to extract the list of terms from GPT-3.5-turbo-instruct-0914 response
+
 def extract_terms(response_text):
     try:
-        # Find the first Python list in the response
         match = re.search(r'\[.*?\]', response_text, re.DOTALL)
         if match:
             terms_str = match.group(0)
             terms = eval(terms_str)
-            return [term.upper() for term in terms]  # Ensure all terms are in uppercase
+            return [term.upper() for term in terms]
     except Exception as e:
         print(f"Error extracting terms: {e}")
     return []
 
-# Function to query GPT-3.5-turbo-instruct-0914 for terms
+
 def query_gpt_for_terms(column_name, stats, verbose=False):
     prompt = construct_prompt(column_name, stats)
     response = openai.Completion.create(
@@ -46,11 +45,13 @@ def query_gpt_for_terms(column_name, stats, verbose=False):
     terms = extract_terms(response_text)
     return terms
 
-# Function to analyze the data and generate fuzzy terms based on statistics
-def analyze_data_and_generate_terms(data, verbose=False):
+
+def analyze_data_and_generate_terms(data, exclude_columns=None, verbose=False):
     skip_columns = {'year', 'month', 'day', 'hour'}
+    if exclude_columns:
+        skip_columns.update(map(str.lower, exclude_columns))
+
     terms_dict = {}
-    
     term_order = {"CONSTANT": 0, "VERY_LOW": 1, "LOW": 2, "MEDIUM": 3, "HIGH": 4, "VERY_HIGH": 5}
     
     for column in data.columns:
@@ -66,13 +67,12 @@ def analyze_data_and_generate_terms(data, verbose=False):
             }
             terms = query_gpt_for_terms(column, stats, verbose)
             
-            # Ensure Likert scale consistency and remove redundant "CONSTANT" terms
             if "CONSTANT" in terms and len(set(terms)) == 1:
                 terms = ["CONSTANT"]
             else:
                 valid_likert_terms = {"VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH"}
                 terms = [term for term in terms if term in valid_likert_terms]
-                terms = list(dict.fromkeys(terms))  # Remove duplicates, preserving order
+                terms = list(dict.fromkeys(terms))
 
                 if not terms:
                     terms = ["CONSTANT"]
@@ -83,14 +83,13 @@ def analyze_data_and_generate_terms(data, verbose=False):
 
     return terms_dict
 
-# Main function to process dataset and generate terms dictionary
-def generate_terms_dict(file_path, api_key, verbose=False):
+
+def generate_terms_dict(file_path, api_key, exclude_columns=None, verbose=False):
     openai.api_key = api_key
     data = pd.read_csv(file_path)
     
-    terms_dict = analyze_data_and_generate_terms(data, verbose)
+    terms_dict = analyze_data_and_generate_terms(data, exclude_columns, verbose)
     
-    # Save the terms dictionary to a file
     with open("terms_dict.py", "w") as f:
         f.write("terms_dict = {\n")
         for column, terms in terms_dict.items():
@@ -99,16 +98,33 @@ def generate_terms_dict(file_path, api_key, verbose=False):
     
     return terms_dict
 
-# Command-line interface
+
+def read_exclude_columns_from_file(file_path):
+    """Helper function to read column names to exclude from a file."""
+    try:
+        with open(file_path, 'r') as file:
+            exclude_columns = file.read().split(',')
+            return [col.strip() for col in exclude_columns if col.strip()]
+    except Exception as e:
+        print(f"Error reading exclude columns file: {e}")
+        return []
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate terms dictionary for a dataset using GPT-3.5-turbo-instruct-0914 based on data analysis.")
     parser.add_argument("file_path", type=str, help="Path to the CSV file containing the dataset.")
     parser.add_argument("api_key", type=str, help="OpenAI API key.")
+    parser.add_argument("-e", "--exclude_columns", nargs='+', help="List of columns to exclude from processing or a path to a comma-separated file with column names.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output.")
     
     args = parser.parse_args()
+
+    exclude_columns = args.exclude_columns
+    if exclude_columns and len(exclude_columns) == 1 and os.path.isfile(exclude_columns[0]):
+        # If a single argument is provided and it's a file, read exclude columns from file
+        exclude_columns = read_exclude_columns_from_file(exclude_columns[0])
     
-    terms_dict = generate_terms_dict(args.file_path, args.api_key, args.verbose)
+    terms_dict = generate_terms_dict(args.file_path, args.api_key, exclude_columns, args.verbose)
 
     if args.verbose:
         print("Generated terms dictionary:")
@@ -117,6 +133,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# Usage
-# python generate_terms_dict.py tests/gp_data_X_train.csv sk-proj-token -v
