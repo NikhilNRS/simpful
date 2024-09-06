@@ -4,7 +4,7 @@ import pandas as pd
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from simpful.gp_fuzzy_system.rule_generator import RuleGenerator
 from simpful.gp_fuzzy_system.evolvable_fuzzy_system import EvolvableFuzzySystem
-from simpful.gp_fuzzy_system.auto_lvs import FuzzyLinguisticVariableProcessor
+from simpful.gp_fuzzy_system._auto_lvs import FuzzyLinguisticVariableProcessor
 from pathlib import Path
 
 
@@ -28,8 +28,6 @@ def read_exclude_columns_from_file(file_path):
     except Exception as e:
         print(f"Error reading exclude columns file: {e}")
         return []
-
-
 
 # Load the CSV data
 file_path = os.path.join(os.path.dirname(__file__), 'gp_data_X_train.csv')
@@ -77,19 +75,46 @@ instances = {
 rg = RuleGenerator(variable_store, verbose=False)
 
 for system_name, system in instances.items():
+    # Set available features from the variable store
+    system.set_available_features_from_variable_store(variable_store)
+    
+    # Generate rules for the system
     rules = rg.generate_rules(2)
+    print(f"Generated rules for {system_name}: {rules}")  # Debug: Print generated rules
+    
+    # Add the generated rules to the system
     for rule in rules:
         system.add_rule(rule)
+    
+    # Print the added rules for debugging
+    print(f"Rules in system {system_name}: {system.get_rules_()}")  # Debug: Print the added rules
+    
+    # Update the output function based on the available features
+    if system.available_features:
+        system.set_output_function(system, system.available_features)
+        print(f"Updated output function for {system_name} using features: {system.available_features}")
+    else:
+        print(f"Warning: No available features found for {system_name}. Output function not set.")
+
 
 # Define output functions for each system
 def set_output_function(system, feature_names):
-    system.set_output_function("PricePrediction", " + ".join([f"1*{name}" for name in feature_names]))
+    # Check if feature_names is valid and not empty
+    if not feature_names or len(feature_names) == 0:
+        print(f"Warning: No features extracted for {system}. Skipping output function setting.")
+        return  # Skip if no valid features are found
+    
+    # Construct the output function
+    function_str = " + ".join([f"1*{name}" for name in feature_names])
+    
+    # Debugging print statements
+    print(f"Setting output function for {system}: {function_str}")
+    
+    # Set the output function in the system
+    system.set_output_function("PricePrediction", function_str)
 
-set_output_function(economic_health, economic_health.extract_features_from_rules())
-set_output_function(market_risk, market_risk.extract_features_from_rules())
-set_output_function(investment_opportunity, investment_opportunity.extract_features_from_rules())
-set_output_function(inflation_prediction, inflation_prediction.extract_features_from_rules())
-set_output_function(market_sentiment, market_sentiment.extract_features_from_rules())
+
+
 
 if __name__ == "__main__":
     verbose_level = 0  # Default to no verbosity
