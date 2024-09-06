@@ -74,6 +74,24 @@ instances = {
 # Generate and add rules to each system using RuleGenerator
 rg = RuleGenerator(variable_store, verbose=False)
 
+# Define output functions for each system
+def set_output_function(system, feature_names):
+    # Check if feature_names is valid and not empty
+    if not feature_names or len(feature_names) == 0:
+        print(f"Warning: No features extracted for {system}. Skipping output function setting.")
+        return  # Skip if no valid features are found
+    
+    # Construct the output function string from available features
+    function_str = " + ".join([f"1*{name}" for name in feature_names])
+    
+    # Debugging print statements
+    print(f"Setting output function for {system}: {function_str}")
+    
+    # Set the output function in the system
+    system.set_output_function("PricePrediction", function_str)
+
+
+# Loop over the instances and set rules and output functions
 for system_name, system in instances.items():
     # Set available features from the variable store
     system.set_available_features_from_variable_store(variable_store)
@@ -90,28 +108,8 @@ for system_name, system in instances.items():
     print(f"Rules in system {system_name}: {system.get_rules_()}")  # Debug: Print the added rules
     
     # Update the output function based on the available features
-    if system.available_features:
-        system.set_output_function(system, system.available_features)
-        print(f"Updated output function for {system_name} using features: {system.available_features}")
-    else:
-        print(f"Warning: No available features found for {system_name}. Output function not set.")
+    set_output_function(system, system.available_features)
 
-
-# Define output functions for each system
-def set_output_function(system, feature_names):
-    # Check if feature_names is valid and not empty
-    if not feature_names or len(feature_names) == 0:
-        print(f"Warning: No features extracted for {system}. Skipping output function setting.")
-        return  # Skip if no valid features are found
-    
-    # Construct the output function
-    function_str = " + ".join([f"1*{name}" for name in feature_names])
-    
-    # Debugging print statements
-    print(f"Setting output function for {system}: {function_str}")
-    
-    # Set the output function in the system
-    system.set_output_function("PricePrediction", function_str)
 
 
 

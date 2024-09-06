@@ -1,3 +1,4 @@
+import itertools
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
@@ -12,6 +13,9 @@ import random
 import re
 
 class EvolvableFuzzySystem(FuzzySystem):
+    # Class variables to hold the different output function types
+    OUTPUT_FUNCTION_TYPES = ['polynomial']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fitness_score = 0
@@ -21,6 +25,27 @@ class EvolvableFuzzySystem(FuzzySystem):
         self.y_train = None
         self.x_test = None
         self.y_test = None
+        
+        self.output_function_type = random.choice(self.OUTPUT_FUNCTION_TYPES)
+        
+        self.polynomial_degrees = None
+        self.interaction_terms = None  
+
+    def _generate_random_polynomial_degrees(self, current_features):
+        """
+        Generates random polynomial degrees for the given features.
+        
+        Args:
+            current_features: A list of feature names for which to generate random degrees.
+        
+        Returns:
+            A dictionary mapping each feature to a random degree.
+        """
+        import random
+        degrees = {}
+        for feature in current_features:
+            degrees[feature] = random.randint(1, 3)  # Generate a random degree between 1 and 3 for each feature
+        return degrees
 
     def load_data(self, x_train=None, y_train=None, x_test=None, y_test=None):
         """
@@ -35,6 +60,21 @@ class EvolvableFuzzySystem(FuzzySystem):
         self.y_train = y_train
         self.x_test = x_test
         self.y_test = y_test
+    
+    def set_available_features_from_variable_store(self, variable_store):
+        """
+        Set available features by fetching all variables from the variable store.
+
+        Args:
+            variable_store: The linguistic variable store (LocalLinguisticVariableStore or similar).
+        """
+        # Get all variables from the linguistic variable store
+        variables = variable_store.get_all_variables()
+        # Set available features based on the variable names
+        self.available_features = list(variables.keys())
+
+        # Print available features for debugging
+        print(f"Available features set from variable store: {self.available_features}")
 
     def clone(self):
         """Creates a deep copy of the system, ensuring independent instances."""
@@ -71,24 +111,23 @@ class EvolvableFuzzySystem(FuzzySystem):
         else:
             if verbose:
                 print("No features available to update the output function.")
-    
-    def update_output_function_polynomial(self, output_var_name="PricePrediction", degrees=None, verbose=False):
+        
+    def update_output_function_polynomial(self, current_features, output_var_name="PricePrediction", degrees=None, verbose=False):
         """
         Updates the output function of the fuzzy system to a polynomial based on the features used in the current rules.
 
         Args:
             output_var_name: The name of the output variable for which the output function is set.
-            degrees: A dictionary mapping each feature to its degree in the polynomial. If None, use degree of 1.
+            degrees: A dictionary where keys are feature names and values are the polynomial degrees for each feature.
             verbose: If True, prints additional details about the process.
         """
-        # Extract features currently used in the rules
-        current_features = self.extract_features_from_rules()
+
+        # Generate random polynomial degrees if none are provided
+        if degrees is None:
+            degrees = self._generate_random_polynomial_degrees(current_features)
         
         # Generate the output function string based on these features
         if current_features:
-            if degrees is None:
-                degrees = {feature: 1 for feature in current_features}
-            
             function_str = " + ".join([f"{feature}**{degrees.get(feature, 1)}" for feature in current_features])
             self.set_output_function(output_var_name, function_str, verbose=verbose)
             
@@ -98,34 +137,68 @@ class EvolvableFuzzySystem(FuzzySystem):
             if verbose:
                 print("No features available to update the output function.")
 
-    def update_output_function_with_interactions(self, output_var_name="PricePrediction", interaction_terms=None, verbose=False):
+
+    def update_output_function_with_interactions(self, current_features, output_var_name="PricePrediction", interaction_terms=None, verbose=False):
         """
         Updates the output function of the fuzzy system based on the features and their interactions used in the current rules.
 
         Args:
             output_var_name: The name of the output variable for which the output function is set.
-            interaction_terms: A list of tuples representing interaction terms. If None, no interactions are used.
+            interaction_terms: A list of tuples representing interaction terms. If None, generate them dynamically.
             verbose: If True, prints additional details about the process.
         """
-        # Extract features currently used in the rules
-        current_features = self.extract_features_from_rules()
-        
+
+        # If no interaction terms are passed, generate them dynamically based on current features
+        if interaction_terms is None:
+            interaction_terms = self._generate_random_interaction_terms()
+
         # Generate the output function string based on these features
         if current_features:
-            terms = [f"{feature}" for feature in current_features]
-            
+            terms = [f"{feature}" for feature in current_features]  # Ensure each term is a string
+
+            # Add interaction terms to the function string
             if interaction_terms:
                 interaction_strs = [f"{'*'.join(term)}" for term in interaction_terms if all(f in current_features for f in term)]
                 terms.extend(interaction_strs)
-            
+
+            # Combine all terms into a single output function string
             function_str = " + ".join(terms)
+
+            # Set the output function
             self.set_output_function(output_var_name, function_str, verbose=verbose)
-            
+
             if verbose:
                 print(f"Updated output function for '{output_var_name}' to '{function_str}'")
         else:
             if verbose:
                 print("No features available to update the output function.")
+
+    def _generate_random_interaction_terms(self, max_terms=3):
+        """
+        Generates and stores random interaction terms between features currently used in the rules.
+        This ensures consistency across generations.
+        
+        Args:
+            max_terms (int): The maximum number of interaction terms to generate.
+        Returns:
+            interaction_terms (list of tuples): List of interaction terms, where each term is a tuple of features.
+        """
+        # Only generate if not already set
+        if self.interaction_terms is None:
+            current_features = self.extract_features_from_rules()
+
+            if len(current_features) < 2:
+                # Not enough features to create interactions
+                self.interaction_terms = []
+            else:
+                # Create all possible 2-feature interaction pairs
+                interaction_combinations = list(itertools.combinations(current_features, 2))
+
+                # Randomly select a subset of these interactions (up to max_terms)
+                random.shuffle(interaction_combinations)
+                self.interaction_terms = interaction_combinations[:max_terms]
+
+        return self.interaction_terms
 
     def get_rules_(self):
         # Implement fetching rules without calling the rule_processor's process_rules_from_system
@@ -354,24 +427,19 @@ class EvolvableFuzzySystem(FuzzySystem):
 
         return list(features_set)
 
-    def update_output_function(self, output_function_type, current_features, coefficient=1, verbose=False):
+    def update_output_function(self, verbose=False):
         """
-        Updates the output function of the fuzzy system based on the specified type.
+        Update the output function based on the selected output function type (self.output_function_type).
+        """
+        current_features = self.extract_features_from_rules()
+        
+        if self.output_function_type == 'linear':
+            self.update_output_function_linear(current_features, verbose=verbose)
+        elif self.output_function_type == 'polynomial':
+            self.update_output_function_polynomial(current_features, self.polynomial_degrees, verbose=verbose)
+        elif self.output_function_type == 'interaction':
+            self.update_output_function_with_interactions(current_features, verbose=verbose)
 
-        Args:
-            output_function_type: Type of output function ('linear', 'polynomial', 'interaction').
-            current_features: List of features currently used in the rules.
-            coefficient: The coefficient to multiply each feature in the output function.
-            verbose: If True, prints additional details about the process.
-        """
-        if output_function_type == 'linear':
-            self.update_output_function_linear(current_features=current_features, coefficient=coefficient, verbose=verbose)
-        elif output_function_type == 'polynomial':
-            self.update_output_function_polynomial(current_features=current_features, verbose=verbose)
-        elif output_function_type == 'interaction':
-            self.update_output_function_with_interactions(current_features=current_features, verbose=verbose)
-        else:
-            raise ValueError(f"Unknown output function type: {output_function_type}")
     
     def predict_with_fis(self, data=None, variable_store=None, verbose=False, print_predictions=False):
         """
@@ -397,7 +465,8 @@ class EvolvableFuzzySystem(FuzzySystem):
         self.ensure_linguistic_variables(variable_store, verbose=verbose)
 
         # Update the output function based on current features in the rules
-        self.update_output_function(output_function_type='linear', current_features=features_used, coefficient=1, verbose=False)
+        # Update the output function based on the selected output function type
+        self.update_output_function(verbose=verbose)
 
         # Ensure the DataFrame contains all necessary features
         if not all(feature in data.columns for feature in features_used):
