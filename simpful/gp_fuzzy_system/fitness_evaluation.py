@@ -41,16 +41,16 @@ def zero_prediction_penalty(predictions, verbose=False):
     
     return penalty
 
+import numpy as np
+
 def evaluate_fitness(system, predictions, actual, weights=None):
     """
     A complex fitness function that considers predictive accuracy (RMSE), 
-    stability of predictions over time, financial utility, and penalizes zero predictions.
+    stability of predictions over time, financial utility, directional accuracy, 
+    and penalizes zero predictions.
     """
     if weights is None:
-        weights = {'rmse': 0.95, 'stability': 0, 'utility': 0, 'zero_penalty': 0}
-    else:
-        # Ensure zero_penalty is included in weights
-        weights.setdefault('zero_penalty', 0.05)
+        weights = {'rmse': 0.85, 'stability': 0.05, 'utility': 0.05, 'zero_penalty': 0.05}
 
     rmse_score = weighted_rmse(actual, predictions)
     stability_score = prediction_stability(predictions)
@@ -70,4 +70,3 @@ def evaluate_fitness(system, predictions, actual, weights=None):
               (weights['zero_penalty'] * normalized_zero_penalty)
 
     return fitness
-

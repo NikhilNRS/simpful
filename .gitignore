@@ -154,3 +154,6 @@ logs.txt
 # models 
 best_model_dir/
 population_dir/
+
+tests/*.log
+tests/log_*.txt
