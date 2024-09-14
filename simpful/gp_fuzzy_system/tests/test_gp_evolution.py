@@ -88,8 +88,8 @@ class TestGeneticAlgorithm(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.variable_store = variable_store
-        cls.population_size = 20
-        cls.max_generations = 5
+        cls.population_size = 10
+        cls.max_generations = 10
         cls.max_rules = 10
         cls.min_rules = 2
         cls.min_clauses_per_rule = 2
@@ -267,9 +267,9 @@ class TestGeneticAlgorithm(unittest.TestCase):
                 elitism_rate=self.elitism_rate,
                 max_rules=self.max_rules,
                 min_rules=self.min_rules,
-                seed_population_from="./saved_models/",
+                seed_population_from='./saved_models/',
                 num_seed_individuals=1,
-                load_from="./",
+                load_from='./',
                 verbose=False,
             )
         )

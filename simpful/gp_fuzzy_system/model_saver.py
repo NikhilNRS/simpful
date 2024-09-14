@@ -1,8 +1,30 @@
 import os
 import pickle
+import logging
 from datetime import datetime
 import glob
 
+# Set up logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# File handler to log to a file
+file_handler = logging.FileHandler('load_populations.log')
+file_handler.setLevel(logging.DEBUG)
+
+# Stream handler to output to console
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+
+# Formatter for log messages
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+stream_handler.setFormatter(formatter)
+
+# Add handlers if not already added
+if not logger.hasHandlers():
+    logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
 
 def load_saved_individuals(directory, num_individuals=None):
     """
@@ -62,10 +84,28 @@ def load_populations_and_best_models(base_directory):
     - A dictionary with directory names as keys and another dictionary as values,
       which contains 'population' and 'best_model' as keys.
     """
+    # Log the current working directory
+    logger.debug(f"Current working directory: {os.getcwd()}")
+
+    # Check if the base directory exists
+    if not os.path.exists(base_directory):
+        logger.error(f"Base directory not found: {base_directory}")
+        raise FileNotFoundError(f"Base directory not found: {base_directory}")
+    
+    logger.info(f"Base directory being used: {base_directory}")
+
     data = {}
 
     population_dir = os.path.join(base_directory, "population_dir")
     best_model_dir = os.path.join(base_directory, "best_model_dir")
+
+    # Check if population and best model directories exist
+    if not os.path.exists(population_dir):
+        logger.error(f"Population directory not found: {population_dir}. Please check that it exists and is accessible.")
+        raise FileNotFoundError(f"Population directory not found: {population_dir}")
+    if not os.path.exists(best_model_dir):
+        logger.error(f"Best model directory not found: {best_model_dir}. Please check that it exists and is accessible.")
+        raise FileNotFoundError(f"Best model directory not found: {best_model_dir}")
 
     population_subdirs = [
         d
@@ -89,9 +129,10 @@ def load_populations_and_best_models(base_directory):
                 best_model = pickle.load(model_file)
 
             data[subdirectory] = {"population": population, "best_model": best_model}
+        else:
+            logger.warning(f"Population or best model file not found in subdirectory: {subdirectory}")
 
     return data
-
 
 # Example usage:
 # base_dir = 'path_to_your_base_directory'

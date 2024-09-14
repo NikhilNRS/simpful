@@ -773,6 +773,7 @@ def genetic_algorithm_loop(
     num_seed_individuals=0,
     load_from=None,
     num_replace_worst=1,
+    short_circuit=True,
 ):
 
     population, backup_population, available_features = initialize_algorithm(
@@ -786,14 +787,28 @@ def genetic_algorithm_loop(
         seed_population_from,
         num_seed_individuals,
     )
-    loaded_data = "/Users/nikhilrazab-sekh/Desktop/simpful/simpful/gp_fuzzy_system/tests"  # We will load this only if we need to
+    
+    if load_from:
+        try:
+            loaded_data = load_populations_and_best_models(load_from)
+        except Exception as e:
+            print(f"Error loading populations and best models: {e}")
+            loaded_data = None
+    else:
+        loaded_data = None
+
 
     progress_bar = tqdm(total=max_generations, desc="Generations", unit="gen")
 
     best_fitness_per_generation = []
     average_fitness_per_generation = []
 
-    patience = max(5, int(max_generations * 0.3))
+    # Set patience based on short_circuit flag
+    if short_circuit:
+        patience = 1  # Set patience to 1 for early stopping
+    else:
+        patience = max(5, int(max_generations * 0.3))  # Default patience setting
+
     no_improvement_counter = 0
     best_fitness = float("inf")
 

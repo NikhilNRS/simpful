@@ -1,6 +1,31 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
 import numpy as np
 import re
 import random
+import logging
+
+
+# Configure logger specifically for this module
+logger = logging.getLogger(__name__)  # Use __name__ to ensure it's module-specific
+logger.setLevel(logging.DEBUG)
+
+# Create a file handler if not already set up
+file_handler = logging.FileHandler('gp_utilities.log')  # Specify the file
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Add the handler only if it's not already added
+if not logger.hasHandlers():
+    logger.addHandler(file_handler)
+
+# Add a stream handler for console output
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)  # This will output logs to the console as well
+
 
 
 def find_best_models(loaded_data, num_best_models):
@@ -15,16 +40,40 @@ def find_best_models(loaded_data, num_best_models):
     Returns:
     - list: A list of the best models sorted by their fitness scores in ascending order.
     """
+    # Log the type of loaded_data to see if it's what we expect
+    logger.debug(f"Type of loaded_data: {type(loaded_data)}")
+    logger.debug(f"Contents of loaded_data: {loaded_data}")
+
+    if not isinstance(loaded_data, dict):
+        logger.error(f"Expected loaded_data to be a dictionary, but got {type(loaded_data)}")
+        raise TypeError(f"loaded_data should be a dictionary, got {type(loaded_data)}")
+
     all_best_models = []
 
-    for directory, data in loaded_data.items():
-        best_model = data["best_model"]
-        all_best_models.append(best_model)
+    try:
+        # Iterate over the dictionary and collect the best models
+        for directory, data in loaded_data.items():
+            logger.debug(f"Processing directory: {directory}")
+            logger.debug(f"Data in directory: {data}")
+            
+            best_model = data.get("best_model")
+            if best_model is None:
+                logger.error(f"No best_model found in directory {directory}")
+            else:
+                all_best_models.append(best_model)
+    except Exception as e:
+        logger.error(f"Error while finding best models: {str(e)}", exc_info=True)
+        raise
+
+    if not all_best_models:
+        logger.warning("No best models were found in the loaded data.")
 
     # Sort the best models based on their fitness
     sorted_best_models = sorted(
         all_best_models, key=lambda model: model.evaluate_fitness()
     )
+
+    logger.debug(f"Sorted best models: {sorted_best_models[:num_best_models]}")
 
     return sorted_best_models[:num_best_models]
 
