@@ -689,6 +689,7 @@ def handle_early_stopping(
     generation,
     max_generations,
     num_replace_worst,
+    early_stop_triggered=False  # New flag to track whether early stop has been triggered
 ):
     if current_best_fitness < best_fitness:
         best_fitness = current_best_fitness
@@ -697,40 +698,44 @@ def handle_early_stopping(
         no_improvement_counter += 1
 
     if no_improvement_counter >= patience:
-        if load_from and not loaded_data:
-            try:
-                loaded_data = load_populations_and_best_models(load_from)
-            except Exception as e:
-                print(f"Error loading populations and best models: {e}")
-                return (
-                    population,
-                    fitness_scores,
-                    best_fitness,
-                    no_improvement_counter,
-                    loaded_data,
-                    True,
-                )
+        if not early_stop_triggered:
+            # Trigger early stop logic only once
+            if load_from and not loaded_data:
+                try:
+                    loaded_data = load_populations_and_best_models(load_from)
+                except Exception as e:
+                    print(f"Error loading populations and best models: {e}")
+                    return (
+                        population,
+                        fitness_scores,
+                        best_fitness,
+                        no_improvement_counter,
+                        loaded_data,
+                        True,  # Stop in case of error
+                    )
 
-        if loaded_data:
-            best_models = find_best_models(loaded_data, num_replace_worst, variable_store)
-            population = replace_worst_models_with_best(
-                population, fitness_scores, best_models, num_replace_worst
-            )
-            fitness_scores = evaluate_population(
-                variable_store,
-                population,
-                backup_population,
-                max_rules,
-                available_features,
-                x_train,
-                y_train,
-                min_rules,
-                verbose,
-                generation,
-                max_generations,
-            )
-            no_improvement_counter = 0  # Reset counter after replacement
+            if loaded_data:
+                best_models = find_best_models(loaded_data, num_replace_worst, variable_store)
+                population = replace_worst_models_with_best(
+                    population, fitness_scores, best_models, num_replace_worst
+                )
+                fitness_scores = evaluate_population(
+                    variable_store,
+                    population,
+                    backup_population,
+                    max_rules,
+                    available_features,
+                    x_train,
+                    y_train,
+                    min_rules,
+                    verbose,
+                    generation,
+                    max_generations,
+                )
+                no_improvement_counter = 0  # Reset counter after replacement
+                early_stop_triggered = True  # Set flag to avoid reloading again
         else:
+            # If we've already reloaded, stop
             if verbose:
                 print(
                     f"Early stopping at generation {generation} due to no improvement in best fitness for {patience} generations."
@@ -741,7 +746,8 @@ def handle_early_stopping(
                 best_fitness,
                 no_improvement_counter,
                 loaded_data,
-                True,
+                True,  # Stop here
+                early_stop_triggered  # Include this value as well
             )
 
     return (
@@ -750,7 +756,8 @@ def handle_early_stopping(
         best_fitness,
         no_improvement_counter,
         loaded_data,
-        False,
+        False,  # Do not stop yet
+        early_stop_triggered  # Pass back the flag
     )
 
 
@@ -797,7 +804,6 @@ def genetic_algorithm_loop(
     else:
         loaded_data = None
 
-
     progress_bar = tqdm(total=max_generations, desc="Generations", unit="gen")
 
     best_fitness_per_generation = []
@@ -807,10 +813,11 @@ def genetic_algorithm_loop(
     if short_circuit:
         patience = 1  # Set patience to 1 for early stopping
     else:
-        patience = max(1, int(max_generations * 0.1))  # Default patience setting, set back to max(5, int(max_generations * 0.1)) later
+        patience = max(1, int(max_generations * 0.1))  # Default patience
 
     no_improvement_counter = 0
     best_fitness = float("inf")
+    early_stop_triggered = False  # Initialize flag
 
     for generation in range(max_generations):
         current_mutation_rate = adaptive_mutation_rate(
@@ -877,6 +884,7 @@ def genetic_algorithm_loop(
                 no_improvement_counter,
                 loaded_data,
                 should_stop,
+                early_stop_triggered  # Track this flag
             ) = handle_early_stopping(
                 current_best_fitness,
                 best_fitness,
@@ -897,6 +905,7 @@ def genetic_algorithm_loop(
                 generation,
                 max_generations,
                 num_replace_worst,
+                early_stop_triggered  # Pass it here
             )
             if should_stop:
                 break
