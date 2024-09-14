@@ -773,7 +773,7 @@ def genetic_algorithm_loop(
     num_seed_individuals=0,
     load_from=None,
     num_replace_worst=1,
-    short_circuit=True,
+    short_circuit=False,
 ):
 
     population, backup_population, available_features = initialize_algorithm(
@@ -807,7 +807,7 @@ def genetic_algorithm_loop(
     if short_circuit:
         patience = 1  # Set patience to 1 for early stopping
     else:
-        patience = max(5, int(max_generations * 0.3))  # Default patience setting
+        patience = max(1, int(max_generations * 0.1))  # Default patience setting, set back to max(5, int(max_generations * 0.1)) later
 
     no_improvement_counter = 0
     best_fitness = float("inf")

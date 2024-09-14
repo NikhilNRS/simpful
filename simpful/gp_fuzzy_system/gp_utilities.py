@@ -43,7 +43,7 @@ def find_best_models(loaded_data, num_best_models, variable_store):
     """
     # Log the type of loaded_data to see if it's what we expect
     logger.debug(f"Type of loaded_data: {type(loaded_data)}")
-    logger.debug(f"Contents of loaded_data: {loaded_data}")
+    # logger.debug(f"Contents of loaded_data: {loaded_data}")
 
     if not isinstance(loaded_data, dict):
         logger.error(f"Expected loaded_data to be a dictionary, but got {type(loaded_data)}")
@@ -55,7 +55,7 @@ def find_best_models(loaded_data, num_best_models, variable_store):
         # Iterate over the dictionary and collect the best models
         for directory, data in loaded_data.items():
             logger.debug(f"Processing directory: {directory}")
-            logger.debug(f"Data in directory: {data}")
+            # logger.debug(f"Data in directory: {data}")
             
             best_model = data.get("best_model")
             if best_model is None:
