@@ -28,7 +28,7 @@ logger.addHandler(stream_handler)  # This will output logs to the console as wel
 
 
 
-def find_best_models(loaded_data, num_best_models):
+def find_best_models(loaded_data, num_best_models, variable_store):
     """
     Find the best models from the loaded data based on fitness evaluation.
 
@@ -36,6 +36,7 @@ def find_best_models(loaded_data, num_best_models):
     - loaded_data (dict): A dictionary where the key is the directory name and the value is a dictionary
                           containing 'population' and 'best_model'.
     - num_best_models (int): The number of best models to find.
+    - variable_store: The variable store containing fuzzy variables.
 
     Returns:
     - list: A list of the best models sorted by their fitness scores in ascending order.
@@ -68,14 +69,15 @@ def find_best_models(loaded_data, num_best_models):
     if not all_best_models:
         logger.warning("No best models were found in the loaded data.")
 
-    # Sort the best models based on their fitness
+    # Sort the best models based on their fitness, passing the variable_store
     sorted_best_models = sorted(
-        all_best_models, key=lambda model: model.evaluate_fitness()
+        all_best_models, key=lambda model: model.evaluate_fitness(variable_store=variable_store)
     )
 
     logger.debug(f"Sorted best models: {sorted_best_models[:num_best_models]}")
 
     return sorted_best_models[:num_best_models]
+
 
 
 def replace_worst_models_with_best(

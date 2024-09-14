@@ -567,7 +567,7 @@ def early_stop_logic(
 
     if no_improvement_counter >= patience:
         if loaded_data:
-            best_models = find_best_models(loaded_data, num_replace_worst)
+            best_models = find_best_models(loaded_data, num_replace_worst, variable_store)
             population = replace_worst_models_with_best(
                 population, fitness_scores, best_models, num_replace_worst
             )
@@ -712,7 +712,7 @@ def handle_early_stopping(
                 )
 
         if loaded_data:
-            best_models = find_best_models(loaded_data, num_replace_worst)
+            best_models = find_best_models(loaded_data, num_replace_worst, variable_store)
             population = replace_worst_models_with_best(
                 population, fitness_scores, best_models, num_replace_worst
             )
