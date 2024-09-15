@@ -1,5 +1,6 @@
 import sys
 import os
+import pandas as pd
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 from simpful.gp_fuzzy_system.rule_generator import RuleGenerator
@@ -25,7 +26,7 @@ exclude_columns = [
     "hour",
     "value",
     "volume",
-]  # TODO: look into why value and colume can't coexist with other volume columns (diavolume, etc.)
+]  # Default exclusion list
 verbose = False
 mf_type = "gaussian"  # or 'triangular' or 'sigmoid'
 
@@ -70,6 +71,8 @@ if __name__ == "__main__":
             verbose_level = 3
         if "-vvvv" in sys.argv:
             verbose_level = 4
+        if "-vvvvv" in sys.argv:  # Verbosity level 5
+            verbose_level = 5
 
     # For '-v' argument: Print all instances and their rules
     if verbose_level == 1:
@@ -106,3 +109,22 @@ if __name__ == "__main__":
             # Get the terms for this variable
             terms = var.get_terms()
             print(f"Retrieved terms for {name}: {terms}")
+
+    if verbose_level == 5:
+        # Load exclude columns from CSV and display them
+        exclude_columns_csv = os.path.join(os.path.dirname(__file__), "least_important_features.csv")
+        
+        # Initialize the processor with the CSV exclude columns
+        processor = FuzzyLinguisticVariableProcessor(
+            file_path,
+            terms_dict_path,
+            verbose,
+            exclude_columns_csv=exclude_columns_csv,  # Specify the CSV file path here
+            mf_type=mf_type,
+            use_standard_terms=True,
+        )
+        # Process the dataset again with the excluded columns from the CSV
+        variable_store = processor.process_dataset()
+
+        # Print confirmation of processing and the excluded columns from the CSV
+        print(f"Processed dataset using excluded columns from {exclude_columns_csv}")

@@ -21,14 +21,13 @@ class FuzzyLinguisticVariableProcessor:
     variables, and stores them for use in a fuzzy logic system. It supports various types of membership functions
     (triangular, gaussian, sigmoid) and allows for verbose output for debugging purposes.
     """
-
     def __init__(
         self,
         file_path,
         terms_dict_path,
         verbose=False,
         exclude_columns=None,
-        exclude_columns_csv=None,  # New argument for the CSV file path
+        exclude_columns_csv=None,
         mf_type="gaussian",
         use_standard_terms=False,
     ):
@@ -48,8 +47,8 @@ class FuzzyLinguisticVariableProcessor:
         self.terms_dict_path = terms_dict_path
         self.verbose = verbose
         self.mf_type = mf_type
-        self.use_standard_terms = use_standard_terms  # New parameter for standard terms usage
-        self.standard_terms = ["LOW", "MEDIUM", "HIGH"]  # Standard terms
+        self.use_standard_terms = use_standard_terms
+        self.standard_terms = ["LOW", "MEDIUM", "HIGH"]
         self.data = pd.read_csv(self.file_path)
 
         # Load exclude_columns from the CSV if provided, otherwise use the list provided directly
@@ -58,8 +57,12 @@ class FuzzyLinguisticVariableProcessor:
         else:
             self.exclude_columns = exclude_columns if exclude_columns else []
 
+        # Always add these columns to the exclusion list
+        self.exclude_columns.extend(["month", "day", "hour", "value", "volume"])
+        self.exclude_columns = list(set(self.exclude_columns))  # Ensure uniqueness
+
         self.terms_dict = self._load_terms_dict()
-            
+
     def _load_exclude_columns_from_csv(self, csv_file_path):
         """
         Load exclude columns from a single-line CSV file where columns are comma-separated on one line.
@@ -68,13 +71,13 @@ class FuzzyLinguisticVariableProcessor:
             csv_file_path (str): Path to the CSV file.
 
         Returns:
-            list: A list of column names to exclude.
+            list: A list of cleaned column names to exclude.
         """
         try:
             with open(csv_file_path, 'r') as f:
                 line = f.readline().strip()  # Read the first line and strip any whitespace
                 exclude_columns = line.split(',')  # Split the line by commas
-                return [col.strip() for col in exclude_columns]  # Remove any extra spaces
+                return [col.strip() for col in exclude_columns]  # Clean column names by stripping spaces
         except Exception as e:
             if self.verbose:
                 print(f"Error loading exclude columns from CSV: {e}")
