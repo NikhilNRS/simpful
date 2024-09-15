@@ -88,8 +88,8 @@ class TestGeneticAlgorithm(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.variable_store = variable_store
-        cls.population_size = 10
-        cls.max_generations = 10
+        cls.population_size = 200
+        cls.max_generations = 150
         cls.max_rules = 10
         cls.min_rules = 2
         cls.min_clauses_per_rule = 2
@@ -229,7 +229,7 @@ class TestGeneticAlgorithm(unittest.TestCase):
             crossover_rate=1,
             mutation_rate=1,
             elitism_rate=0.05,
-            tournament_size=3,
+            tournament_size=6,
             selection_size=selection_size,
             backup_population=self.backup_population,
             max_rules=self.max_rules,
