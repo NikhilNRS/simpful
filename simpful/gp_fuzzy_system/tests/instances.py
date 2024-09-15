@@ -20,13 +20,21 @@ sepsis_system = EvolvableFuzzySystem()
 # Load the CSV data
 file_path = os.path.join(os.path.dirname(__file__), "gp_data_x_train.csv")
 terms_dict_path = os.path.join(os.path.dirname(__file__), "..", "terms_dict.py")
-exclude_columns = [
+
+# Default exclude columns
+default_exclude_columns = [
     "month",
     "day",
     "hour",
     "value",
     "volume",
-]  # Default exclusion list
+]
+
+# Define the path to the CSV file with columns to exclude, or use default if no CSV is provided
+exclude_columns_csv = os.path.join(os.path.dirname(__file__), "least_important_features.csv")
+if not os.path.exists(exclude_columns_csv):
+    exclude_columns_csv = None  # No CSV provided, use default
+
 verbose = False
 mf_type = "gaussian"  # or 'triangular' or 'sigmoid'
 
@@ -35,10 +43,12 @@ processor = FuzzyLinguisticVariableProcessor(
     file_path,
     terms_dict_path,
     verbose,
-    exclude_columns,
-    mf_type,
+    exclude_columns=default_exclude_columns if exclude_columns_csv is None else None,  # Use default if no CSV is provided
+    exclude_columns_csv=exclude_columns_csv,  # CSV for excluded columns, if available
+    mf_type=mf_type,
     use_standard_terms=True,
 )
+
 # Process the dataset
 variable_store = processor.process_dataset()
 
@@ -111,20 +121,5 @@ if __name__ == "__main__":
             print(f"Retrieved terms for {name}: {terms}")
 
     if verbose_level == 5:
-        # Load exclude columns from CSV and display them
-        exclude_columns_csv = os.path.join(os.path.dirname(__file__), "least_important_features.csv")
-        
-        # Initialize the processor with the CSV exclude columns
-        processor = FuzzyLinguisticVariableProcessor(
-            file_path,
-            terms_dict_path,
-            verbose,
-            exclude_columns_csv=exclude_columns_csv,  # Specify the CSV file path here
-            mf_type=mf_type,
-            use_standard_terms=True,
-        )
-        # Process the dataset again with the excluded columns from the CSV
-        variable_store = processor.process_dataset()
-
-        # Print confirmation of processing and the excluded columns from the CSV
-        print(f"Processed dataset using excluded columns from {exclude_columns_csv}")
+        # Verbose level 5 will still display and confirm the excluded columns from the CSV
+        print(f"Processed dataset using excluded columns from {exclude_columns_csv}" if exclude_columns_csv else "Processed dataset using default excluded columns.")
