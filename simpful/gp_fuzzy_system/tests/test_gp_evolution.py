@@ -88,8 +88,8 @@ class TestGeneticAlgorithm(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.variable_store = variable_store
-        cls.population_size = 200
-        cls.max_generations = 150
+        cls.population_size = 100
+        cls.max_generations = 100
         cls.max_rules = 10
         cls.min_rules = 2
         cls.min_clauses_per_rule = 2

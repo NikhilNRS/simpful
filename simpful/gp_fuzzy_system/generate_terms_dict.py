@@ -4,7 +4,6 @@ import argparse
 import re
 
 
-# Function to construct the prompt for GPT-3.5-turbo-instruct-0914
 def construct_prompt(column_name, stats):
     """
     Construct a prompt to query GPT-3.5-turbo-instruct-0914 for fuzzy terms.
@@ -17,13 +16,17 @@ def construct_prompt(column_name, stats):
         str: A formatted prompt string for GPT-3.5-turbo-instruct-0914.
     """
     prompt = f"""
-You are an expert in fuzzy logic systems. Based on the following statistics for the column '{column_name}':
+You are an expert in financial fuzzy logic systems. Based on the following statistics for the column '{column_name}':
 Min: {stats['min']}
 Max: {stats['max']}
 Mean: {stats['mean']}
 Std: {stats['std']}
 
-Suggest appropriate fuzzy terms for this column in the format of a Python list, adhering to a Likert scale. Use terms like "VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH". If the data suggests a constant or negligible change, suggest "CONSTANT". Consider using 1, 3, 4, or 5 terms based on the data distribution. Ensure the terms are ordered from smallest to largest.
+Suggest appropriate fuzzy terms for this column in the format of a Python list, adhering to a Likert scale. Use terms like "VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH". If the data suggests a constant or negligible change, suggest "CONSTANT". 
+
+Additionally, if this variable has an inverse meaning (where higher values correspond to a 'lower' meaning, and lower values to a 'higher' meaning), adjust the terms accordingly. If using reverse order (e.g., where 'HIGH' should represent lower values) better represents the data, suggest the terms in reverse order.
+
+Consider using 1, 3, 4, or 5 terms based on the data distribution. Ensure the terms are ordered appropriately based on the meaning of the variable and its data characteristics. Please give the terms in an ordered list format.
 """
     return prompt
 
